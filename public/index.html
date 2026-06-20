@@ -317,7 +317,7 @@ async function loadWatchlist() {
 
   try {
     setStatus('Récupération de la watchlist…');
-    const resp = await fetch(`https://random-movie-xxx.onrender.com/api/watchlist/${encodeURIComponent(username)}`);
+    const resp = await fetch(`https://random-movie-v6j8.onrender.com/api/watchlist/${encodeURIComponent(username)}`);
     const data = await resp.json();
 
     if (!resp.ok) {
