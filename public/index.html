@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Letterboxd · Film du hasard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #1a1a1a;
+    --surface: #252525;
+    --surface2: #2e2e2e;
+    --border: #383838;
+    --text: #e8e8e8;
+    --muted: #888;
+    --accent: #00c030;
+    --accent-hover: #00a828;
+    --radius: 10px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .app { width: 100%; max-width: 640px; }
+
+  header { text-align: center; margin-bottom: 2.5rem; }
+  header h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; }
+  header p { font-size: 14px; color: var(--muted); }
+
+  .lb-logo { color: var(--accent); margin-right: 6px; font-size: 1.4rem; }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.25rem;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  button {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    white-space: nowrap;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .status {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    padding: 2rem 0;
+    display: none;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error {
+    background: #3a1a1a;
+    border: 1px solid #7a2a2a;
+    color: #f88;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 14px;
+    display: none;
+    margin-bottom: 1rem;
+  }
+
+  /* Film card */
+  .film-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .film-top {
+    display: flex;
+    gap: 0;
+  }
+
+  .poster {
+    width: 130px;
+    min-width: 130px;
+    background: var(--surface2);
+    position: relative;
+  }
+  .poster img {
+    width: 100%;
+    display: block;
+    min-height: 195px;
+    object-fit: cover;
+  }
+  .poster-placeholder {
+    width: 130px;
+    min-height: 195px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 2.5rem;
+  }
+
+  .film-info {
+    padding: 1.1rem 1.25rem;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .film-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .film-year {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .genre-tag {
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 9px;
+    color: var(--muted);
+  }
+
+  .overview {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+    margin-top: 4px;
+  }
+
+  .film-links {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .film-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    transition: border-color 0.15s, color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .film-link:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Bottom bar */
+  .film-bottom {
+    border-top: 1px solid var(--border);
+    padding: 0.9rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .count-label { font-size: 12px; color: var(--muted); }
+
+  .btn-roll {
+    background: var(--accent);
+    color: #000;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* Rating stars */
+  .tmdb-rating {
+    font-size: 12px;
+    color: #f5c518;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  footer {
+    margin-top: 3rem;
+    font-size: 12px;
+    color: #555;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1><span class="lb-logo">◉</span>Letterboxd · film du hasard</h1>
+    <p>Tire un film aléatoire depuis la watchlist d'un profil public</p>
+  </header>
+
+  <div class="input-group">
+    <input type="text" id="username" placeholder="Nom d'utilisateur Letterboxd…" autocomplete="off" />
+    <button id="loadBtn" onclick="loadWatchlist()">Charger</button>
+  </div>
+
+  <div class="error" id="error"></div>
+
+  <div class="status" id="status">
+    <span class="spinner"></span>
+    <span id="statusText">Chargement…</span>
+  </div>
+
+  <div class="film-card" id="filmCard">
+    <div class="film-top">
+      <div class="poster" id="posterWrap">
+        <div class="poster-placeholder" id="posterPlaceholder">🎬</div>
+        <img id="posterImg" src="" alt="" style="display:none;" />
+      </div>
+      <div class="film-info">
+        <div class="film-title" id="filmTitle">—</div>
+        <div class="film-year" id="filmYear"></div>
+        <div class="genres" id="genres"></div>
+        <div class="overview" id="overview"></div>
+        <div class="film-links">
+          <a class="film-link" id="lbLink" href="#" target="_blank">
+            <span>◉</span> Letterboxd
+          </a>
+          <a class="film-link" id="tmdbLink" href="#" target="_blank">
+            🎞 TMDB
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="film-bottom">
+      <span class="count-label" id="countLabel"></span>
+      <button class="btn-roll" onclick="pickRandom()">🎲 Autre film</button>
+    </div>
+  </div>
+</div>
+
+<footer>Données via <a href="https://letterboxd.com" style="color:#555;">Letterboxd</a> · fiches via <a href="https://www.themoviedb.org/" style="color:#555;">TMDB</a></footer>
+
+<script>
+const TMDB_KEY = '8265bd1679663a7ea12ac168da84d2e8';
+let watchlist = [];
+let currentUser = '';
+let seenHistory = new Set();
+
+async function loadWatchlist() {
+  const username = document.getElementById('username').value.trim();
+  if (!username) return;
+  currentUser = username;
+
+  setLoading(true);
+  hideError();
+  document.getElementById('filmCard').style.display = 'none';
+  watchlist = [];
+  seenHistory.clear();
+
+  try {
+    setStatus('Récupération de la watchlist…');
+    const resp = await fetch(`/api/watchlist/${encodeURIComponent(username)}`);
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showError(data.error || 'Erreur inconnue');
+      return;
+    }
+
+    if (data.films.length === 0) {
+      showError('La watchlist est vide ou le profil est privé.');
+      return;
+    }
+
+    watchlist = data.films;
+    setStatus('');
+    document.getElementById('countLabel').textContent = `${watchlist.length} film${watchlist.length > 1 ? 's' : ''} dans la watchlist`;
+    pickRandom();
+  } catch (e) {
+    showError('Impossible de joindre le serveur local. Lance bien `node server.js`.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function pickRandom() {
+  if (watchlist.length === 0) return;
+
+  // Avoid showing same film twice in a row
+  let available = watchlist.filter(f => !seenHistory.has(f.slug));
+  if (available.length === 0) {
+    seenHistory.clear();
+    available = watchlist;
+  }
+
+  const film = available[Math.floor(Math.random() * available.length)];
+  seenHistory.add(film.slug);
+
+  document.getElementById('filmCard').style.display = 'block';
+  document.getElementById('filmTitle').textContent = film.name || film.slug;
+  document.getElementById('filmYear').textContent = film.year ? `(${film.year})` : '';
+  document.getElementById('genres').innerHTML = '';
+  document.getElementById('overview').textContent = '';
+  document.getElementById('lbLink').href = `https://letterboxd.com/film/${film.slug}/`;
+  document.getElementById('tmdbLink').href = '#';
+  document.getElementById('posterImg').style.display = 'none';
+  document.getElementById('posterPlaceholder').style.display = 'flex';
+
+  // Fetch from TMDB
+  try {
+    const tmdb = await fetchTMDB(film.name, film.year);
+    if (tmdb) applyTMDB(tmdb);
+  } catch(e) {
+    console.warn('TMDB unavailable', e);
+  }
+}
+
+async function fetchTMDB(title, year) {
+  let url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&language=fr-FR&query=${encodeURIComponent(title)}`;
+  if (year) url += `&year=${year}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.results || !data.results.length) return null;
+  const id = data.results[0].id;
+  const detail = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR`);
+  return detail.json();
+}
+
+function applyTMDB(t) {
+  document.getElementById('filmTitle').textContent = t.title || t.original_title;
+  if (t.release_date) {
+    document.getElementById('filmYear').textContent = `(${t.release_date.slice(0, 4)})`;
+  }
+  if (t.genres && t.genres.length) {
+    document.getElementById('genres').innerHTML = t.genres.slice(0, 4)
+      .map(g => `<span class="genre-tag">${g.name}</span>`).join('');
+  }
+  if (t.overview) {
+    document.getElementById('overview').textContent = t.overview;
+  }
+  if (t.poster_path) {
+    const img = document.getElementById('posterImg');
+    img.src = `https://image.tmdb.org/t/p/w342${t.poster_path}`;
+    img.alt = t.title;
+    img.onload = () => {
+      document.getElementById('posterPlaceholder').style.display = 'none';
+      img.style.display = 'block';
+    };
+  }
+  document.getElementById('tmdbLink').href = `https://www.themoviedb.org/movie/${t.id}`;
+}
+
+function setLoading(on) {
+  document.getElementById('loadBtn').disabled = on;
+  document.getElementById('status').style.display = on ? 'flex' : 'none';
+}
+function setStatus(msg) { document.getElementById('statusText').textContent = msg; }
+function showError(msg) {
+  const el = document.getElementById('error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() { document.getElementById('error').style.display = 'none'; }
+
+document.getElementById('username').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadWatchlist();
+});
+</script>
+</body>
+</html>
