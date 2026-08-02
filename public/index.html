@@ -7,6 +7,8 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  [hidden] { display: none !important; }
+
   :root {
     --bg: #1a1a1a;
     --surface: #252525;
@@ -240,6 +242,154 @@
     gap: 4px;
   }
 
+  /* Sélecteur de mode */
+  .modes {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 1.5rem;
+  }
+  .mode-btn {
+    flex: 1;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+  .mode-btn:hover { background: var(--surface2); color: var(--text); }
+  .mode-btn.-active { background: var(--accent); color: #000; }
+  .mode-btn.-active:hover { background: var(--accent-hover); color: #000; }
+
+  /* Mode duel */
+  .duel-source {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+  .src-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+  .src-btn:hover { background: var(--surface2); color: var(--text); }
+  .src-btn.-active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+
+  .duel-question {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .duel {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .vs {
+    align-self: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .contender {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0;
+    color: var(--text);
+    font-weight: 400;
+    text-align: left;
+    /* la règle button{} impose nowrap, qui tronquerait les titres longs */
+    white-space: normal;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s, transform 0.15s, opacity 0.25s, box-shadow 0.15s;
+  }
+  .contender:hover { background: var(--surface); border-color: var(--accent); transform: translateY(-2px); }
+  .duel.-revealed .contender { cursor: default; }
+  .duel.-revealed .contender:hover { transform: none; }
+
+  .c-poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--muted);
+  }
+  .c-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .c-body {
+    padding: 0.8rem 0.9rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .c-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .c-year { font-size: 12px; color: var(--muted); }
+  .c-score {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .c-score small { font-size: 11px; font-weight: 400; color: var(--muted); }
+  .duel.-revealed .c-score { opacity: 1; }
+
+  .contender.-win { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .contender.-lose { opacity: 0.5; }
+  .contender.-wrong { border-color: #a33; box-shadow: 0 0 0 1px #a33; }
+  .contender.-wrong .c-score { color: #f88; }
+  .duel.-revealed .contender.-win:hover { border-color: var(--accent); }
+  .duel.-revealed .contender.-lose:hover { border-color: var(--border); }
+  .duel.-revealed .contender.-wrong:hover { border-color: #a33; }
+
+  .duel-verdict {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 19px;
+    margin-top: 1rem;
+  }
+  .duel-verdict.-ok { color: var(--accent); }
+  .duel-verdict.-ko { color: #f88; }
+
+  .duel-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+  }
+
+  @media (max-width: 460px) {
+    .duel { gap: 6px; }
+    .c-body { padding: 0.6rem 0.65rem 0.7rem; }
+    .c-title { font-size: 13px; }
+    .c-score { font-size: 13px; }
+    .vs { font-size: 11px; }
+  }
+
   footer {
     margin-top: 3rem;
     font-size: 12px;
@@ -256,6 +406,12 @@
     <p>Tire un film aléatoire depuis la watchlist d'un profil public</p>
   </header>
 
+  <nav class="modes">
+    <button class="mode-btn -active" id="modeRandom" onclick="setMode('random')">🎲 Film du hasard</button>
+    <button class="mode-btn" id="modeDuel" onclick="setMode('duel')">⚔️ Duel de popularité</button>
+  </nav>
+
+<section id="viewRandom">
   <div class="input-group">
     <input type="text" id="username" placeholder="Nom d'utilisateur Letterboxd…" autocomplete="off" />
     <button id="loadBtn" onclick="loadWatchlist()">Charger</button>
@@ -294,12 +450,68 @@
       <button class="btn-roll" onclick="pickRandom()">🎲 Autre film</button>
     </div>
   </div>
+</section>
+
+<section id="viewDuel" hidden>
+  <div class="duel-source">
+    <button class="src-btn -active" id="srcPopular" onclick="setDuelSource('popular')">Films populaires</button>
+    <button class="src-btn" id="srcWatchlist" onclick="setDuelSource('watchlist')">Ma watchlist</button>
+  </div>
+
+  <div class="input-group" id="duelUserGroup" hidden>
+    <input type="text" id="duelUsername" placeholder="Nom d'utilisateur Letterboxd…" autocomplete="off" />
+    <button id="duelLoadBtn" onclick="loadDuelWatchlist()">Charger</button>
+  </div>
+
+  <div class="error" id="duelError"></div>
+
+  <div class="status" id="duelStatus">
+    <span class="spinner"></span>
+    <span id="duelStatusText">Chargement…</span>
+  </div>
+
+  <div id="duelGame" hidden>
+    <p class="duel-question">Lequel a le plus de notes sur Letterboxd ?</p>
+
+    <div class="duel" id="duel">
+      <button class="contender" id="c0" onclick="vote(0)">
+        <div class="c-poster" id="c0poster">🎬</div>
+        <div class="c-body">
+          <div class="c-title" id="c0title"></div>
+          <div class="c-year" id="c0year"></div>
+          <div class="c-score"><span id="c0count"></span> <small>notes</small></div>
+        </div>
+      </button>
+      <span class="vs">VS</span>
+      <button class="contender" id="c1" onclick="vote(1)">
+        <div class="c-poster" id="c1poster">🎬</div>
+        <div class="c-body">
+          <div class="c-title" id="c1title"></div>
+          <div class="c-year" id="c1year"></div>
+          <div class="c-score"><span id="c1count"></span> <small>notes</small></div>
+        </div>
+      </button>
+    </div>
+
+    <div class="duel-verdict" id="duelVerdict"></div>
+
+    <div class="duel-bottom">
+      <span class="count-label" id="duelPoolLabel"></span>
+      <button class="btn-roll" id="nextBtn" onclick="newDuel()" hidden>Duel suivant →</button>
+    </div>
+  </div>
+</section>
 </div>
 
 <footer>Données via <a href="https://letterboxd.com" style="color:#555;">Letterboxd</a> · fiches via <a href="https://www.themoviedb.org/" style="color:#555;">TMDB</a></footer>
 
 <script>
 const TMDB_KEY = '8265bd1679663a7ea12ac168da84d2e8';
+
+// En local, le serveur Express sert aussi cette page : on reste sur la même origine.
+const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? '' : 'https://random-movie-v6j8.onrender.com';
+
 let watchlist = [];
 let currentUser = '';
 let seenHistory = new Set();
@@ -317,7 +529,7 @@ async function loadWatchlist() {
 
   try {
     setStatus('Récupération de la watchlist…');
-    const resp = await fetch(`https://random-movie-v6j8.onrender.com/api/watchlist/${encodeURIComponent(username)}`);
+    const resp = await fetch(`${API_BASE}/api/watchlist/${encodeURIComponent(username)}`);
     const data = await resp.json();
 
     if (!resp.ok) {
@@ -422,6 +634,343 @@ function hideError() { document.getElementById('error').style.display = 'none'; 
 
 document.getElementById('username').addEventListener('keydown', e => {
   if (e.key === 'Enter') loadWatchlist();
+});
+
+
+// ============ Mode duel ============
+// Le pool vient de public/films.json (généré par scripts/build-pool.js), trié
+// par nombre de notes. L'index d'un film dans ce tableau est donc son rang de
+// popularité, ce qui sert à composer des duels ni évidents ni indécidables.
+
+const DUEL_MIN_POOL = 6;
+
+// En dessous, le film est trop confidentiel : deviner entre 400 et 600 notes
+// ne relève pas de la culture ciné mais du hasard.
+const MIN_RATINGS = 3000;
+
+// Le tirage est biaisé vers le haut du classement — sans ça, une watchlist
+// pointue ne proposerait que des duels entre films inconnus.
+const POPULARITY_BIAS = 1.8;
+
+let popularPool = null;
+let duelPool = [];
+let duelSource = 'popular';
+let duelPair = null;
+let duelRevealed = false;
+let recentPairs = [];
+let topUpToken = 0;
+
+function setMode(mode) {
+  const isDuel = mode === 'duel';
+  document.getElementById('viewRandom').hidden = isDuel;
+  document.getElementById('viewDuel').hidden = !isDuel;
+  document.getElementById('modeRandom').classList.toggle('-active', !isDuel);
+  document.getElementById('modeDuel').classList.toggle('-active', isDuel);
+  if (isDuel && !duelPair && duelSource === 'popular') startDuel();
+}
+
+function setDuelSource(src) {
+  if (duelSource === src) return;
+  duelSource = src;
+  topUpToken++;
+  duelPair = null;
+  duelPool = [];
+  recentPairs = [];
+
+  document.getElementById('srcPopular').classList.toggle('-active', src === 'popular');
+  document.getElementById('srcWatchlist').classList.toggle('-active', src === 'watchlist');
+  document.getElementById('duelUserGroup').hidden = src !== 'watchlist';
+  document.getElementById('duelGame').hidden = true;
+  hideDuelError();
+  setDuelLoading(false);
+
+  if (src === 'popular') {
+    startDuel();
+  } else {
+    const input = document.getElementById('duelUsername');
+    if (!input.value) input.value = document.getElementById('username').value.trim();
+    input.focus();
+  }
+}
+
+async function loadPopularPool() {
+  if (popularPool) return popularPool;
+  const resp = await fetch('films.json');
+  if (!resp.ok) throw new Error('films.json introuvable');
+  const data = await resp.json();
+  popularPool = sortPool(data.filter(f => f.name && f.ratingCount >= MIN_RATINGS));
+  return popularPool;
+}
+
+async function startDuel() {
+  setDuelLoading(true, 'Chargement des films…');
+  hideDuelError();
+  try {
+    const pool = await loadPopularPool();
+    if (pool.length < 2) {
+      showDuelError('Pool de films vide — lance `node scripts/build-pool.js`.');
+      return;
+    }
+    duelPool = pool.slice();
+    newDuel();
+  } catch (e) {
+    showDuelError('Impossible de charger films.json.');
+  } finally {
+    setDuelLoading(false);
+  }
+}
+
+async function loadDuelWatchlist() {
+  const user = document.getElementById('duelUsername').value.trim();
+  if (!user) return;
+
+  const token = ++topUpToken;
+  duelPair = null;
+  duelPool = [];
+  recentPairs = [];
+  document.getElementById('duelGame').hidden = true;
+  document.getElementById('duelLoadBtn').disabled = true;
+  hideDuelError();
+  setDuelLoading(true, 'Récupération de la watchlist…');
+
+  try {
+    const pool = await loadPopularPool();
+    const resp = await fetch(`${API_BASE}/api/watchlist/${encodeURIComponent(user)}`);
+    const data = await resp.json();
+    if (token !== topUpToken) return;
+
+    if (!resp.ok) {
+      showDuelError(data.error || 'Erreur inconnue');
+      setDuelLoading(false);
+      return;
+    }
+    if (!data.films.length) {
+      showDuelError('La watchlist est vide ou le profil est privé.');
+      setDuelLoading(false);
+      return;
+    }
+
+    // Les films déjà présents dans le pool ont leur popularité : jouables tout
+    // de suite. Les autres sont résolus en tâche de fond pendant la partie.
+    const known = new Map(pool.map(f => [f.slug, f]));
+    const hits = [];
+    const misses = [];
+    for (const f of data.films) {
+      const found = known.get(f.slug);
+      if (found) hits.push(found);
+      else misses.push(f.slug);
+    }
+
+    duelPool = sortPool(hits);
+    if (duelPool.length >= DUEL_MIN_POOL) {
+      setDuelLoading(false);
+      newDuel();
+    } else {
+      setDuelLoading(true, 'Analyse de la popularité des films…');
+    }
+    topUpPool(misses, token);
+  } catch (e) {
+    showDuelError('Impossible de joindre le serveur.');
+    setDuelLoading(false);
+  } finally {
+    document.getElementById('duelLoadBtn').disabled = false;
+  }
+}
+
+// Complète le pool avec les films de la watchlist absents de films.json.
+async function topUpPool(slugs, token) {
+  const queue = shuffle(slugs.slice());
+
+  for (let i = 0; i < queue.length && duelPool.length < 120; i += 20) {
+    if (token !== topUpToken) return;
+    try {
+      const resp = await fetch(`${API_BASE}/api/films?slugs=${queue.slice(i, i + 20).join(',')}`);
+      if (!resp.ok) break;
+      const { films } = await resp.json();
+      if (token !== topUpToken) return;
+
+      for (const f of films) {
+        if (f.ratingCount >= MIN_RATINGS) duelPool.push(f);
+      }
+      sortPool(duelPool);
+      updatePoolLabel();
+
+      if (!duelPair && duelPool.length >= DUEL_MIN_POOL) {
+        setDuelLoading(false);
+        newDuel();
+      }
+    } catch (e) {
+      break;
+    }
+  }
+
+  if (token !== topUpToken) return;
+  setDuelLoading(false);
+  if (duelPool.length < 2) showDuelError('Pas assez de films exploitables dans cette watchlist.');
+  else if (!duelPair) newDuel();
+}
+
+function sortPool(list) {
+  return list.sort((a, b) => b.ratingCount - a.ratingCount);
+}
+
+function pairKey(a, b) {
+  return a.slug < b.slug ? a.slug + '|' + b.slug : b.slug + '|' + a.slug;
+}
+
+function acceptPair(a, b) {
+  const key = pairKey(a, b);
+  recentPairs.push(key);
+  if (recentPairs.length > 40) recentPairs.shift();
+  return Math.random() < 0.5 ? [a, b] : [b, a];
+}
+
+// Deux films proches dans le classement : l'écart reste devinable sans être
+// une évidence. Un écart de moins de 4 % reviendrait à jouer à pile ou face.
+function pickPair() {
+  const n = duelPool.length;
+  if (n < 2) return null;
+
+  const maxGap = Math.max(3, Math.min(45, Math.round(n * 0.15)));
+  const minGap = Math.min(2, maxGap);
+
+  for (let t = 0; t < 80; t++) {
+    const i = Math.floor(Math.pow(Math.random(), POPULARITY_BIAS) * n);
+    const gap = minGap + Math.floor(Math.random() * (maxGap - minGap + 1));
+    const j = Math.random() < 0.5 ? i - gap : i + gap;
+    if (j < 0 || j >= n) continue;
+
+    const a = duelPool[i];
+    const b = duelPool[j];
+    const hi = Math.max(a.ratingCount, b.ratingCount);
+    const lo = Math.min(a.ratingCount, b.ratingCount);
+    if (!lo || hi / lo < 1.04) continue;
+    if (recentPairs.includes(pairKey(a, b))) continue;
+    return acceptPair(a, b);
+  }
+
+  for (let t = 0; t < 40; t++) {
+    const a = duelPool[Math.floor(Math.random() * n)];
+    const b = duelPool[Math.floor(Math.random() * n)];
+    if (a !== b && a.ratingCount !== b.ratingCount) return acceptPair(a, b);
+  }
+  return null;
+}
+
+function newDuel() {
+  const pair = pickPair();
+  if (!pair) {
+    showDuelError('Pas assez de films pour lancer un duel.');
+    return;
+  }
+
+  duelPair = pair;
+  duelRevealed = false;
+
+  hideDuelError();
+  document.getElementById('duelGame').hidden = false;
+  document.getElementById('duel').classList.remove('-revealed');
+  document.getElementById('nextBtn').hidden = true;
+
+  const verdict = document.getElementById('duelVerdict');
+  verdict.textContent = '';
+  verdict.className = 'duel-verdict';
+
+  pair.forEach((film, k) => {
+    document.getElementById('c' + k).classList.remove('-win', '-lose', '-wrong');
+    document.getElementById('c' + k + 'title').textContent = film.name || film.slug;
+    document.getElementById('c' + k + 'year').textContent = film.year ? `(${film.year})` : '';
+    document.getElementById('c' + k + 'count').textContent = '';
+
+    const poster = document.getElementById('c' + k + 'poster');
+    poster.textContent = '';
+    if (film.poster) {
+      const img = document.createElement('img');
+      img.src = film.poster;
+      img.alt = '';
+      poster.appendChild(img);
+    } else {
+      poster.textContent = '🎬';
+    }
+  });
+
+  updatePoolLabel();
+}
+
+function vote(side) {
+  if (!duelPair || duelRevealed) return;
+  duelRevealed = true;
+
+  const winner = duelPair[0].ratingCount >= duelPair[1].ratingCount ? 0 : 1;
+  const correct = side === winner;
+
+  document.getElementById('duel').classList.add('-revealed');
+  document.getElementById('c' + winner).classList.add('-win');
+  document.getElementById('c' + (1 - winner)).classList.add('-lose');
+  if (!correct) document.getElementById('c' + side).classList.add('-wrong');
+
+  duelPair.forEach((film, k) => {
+    countUp(document.getElementById('c' + k + 'count'), film.ratingCount);
+  });
+
+  const verdict = document.getElementById('duelVerdict');
+  verdict.textContent = correct ? '✓ Bien vu' : '✗ Raté';
+  verdict.className = 'duel-verdict ' + (correct ? '-ok' : '-ko');
+
+  document.getElementById('nextBtn').hidden = false;
+}
+
+function countUp(el, target) {
+  // Valeur finale posée d'emblée : si l'onglet est en arrière-plan, les frames
+  // d'animation ne sont pas jouées et le compteur resterait vide.
+  el.textContent = target.toLocaleString('fr-FR');
+
+  const started = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - started) / 650);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * eased).toLocaleString('fr-FR');
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function updatePoolLabel() {
+  const n = duelPool.length;
+  const label = duelSource === 'watchlist' ? 'de la watchlist' : 'populaires';
+  document.getElementById('duelPoolLabel').textContent = n ? `${n} films ${label}` : '';
+}
+
+function setDuelLoading(on, msg) {
+  document.getElementById('duelStatus').style.display = on ? 'flex' : 'none';
+  if (msg) document.getElementById('duelStatusText').textContent = msg;
+}
+function showDuelError(msg) {
+  const el = document.getElementById('duelError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideDuelError() { document.getElementById('duelError').style.display = 'none'; }
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+document.getElementById('duelUsername').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadDuelWatchlist();
+});
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('viewDuel').hidden) return;
+  if (e.target.tagName === 'INPUT') return;
+
+  if (e.key === 'ArrowLeft') { e.preventDefault(); vote(0); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); vote(1); }
+  else if ((e.key === 'Enter' || e.key === ' ') && duelRevealed) { e.preventDefault(); newDuel(); }
 });
 </script>
 </body>
