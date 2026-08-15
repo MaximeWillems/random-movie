@@ -51,14 +51,27 @@ l'écart de popularité entre les deux films :
 Le palier facile est **plafonné à 12×** : au-delà, on opposerait un blockbuster
 à un film que personne ne connaît, ce qui n'a plus grand intérêt.
 
-Les paliers s'enchaînent par séries de 5 selon l'un de ces motifs, retiré au
-hasard à chaque cycle (le même peut ressortir) :
+Les paliers s'enchaînent par séries de 5 selon un motif retiré au hasard à
+chaque cycle (le même peut ressortir). Plus la série monte, plus les motifs
+penchent vers les duels serrés :
 
 ```
-A B B A C     A = Facile
-B A B C A     B = Moyen
-A A B C C     C = Difficile
+        série 0-49     série 50-99    série 100+
+        A B B A C      B B A C C      C C C C A      A = Facile
+        B A B C A      B A B C B      B B C B B      B = Moyen
+        A A B C C      C B B B C      C B C B C      C = Difficile
 ```
+
+Ce que ça donne en pratique, sur une partie de 120 duels sans faute :
+
+| Série | Facile | Moyen | Difficile |
+|---|---|---|---|
+| 0-49 | 40 % | 32 % | 28 % |
+| 50-99 | 12 % | 54 % | 34 % |
+| 100+ | 10 % | 40 % | 50 % |
+
+Le jeu de motifs est choisi au début de chaque cycle de 5, en fonction de la
+série **en cours** : casser sa série ramène donc aux motifs les plus faciles.
 
 Quand le pool est trop petit pour servir le palier demandé, le duel se rabat
 sur le palier le plus proche plutôt que de ne rien proposer — c'est le cas

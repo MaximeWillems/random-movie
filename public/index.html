@@ -718,15 +718,39 @@ const TIERS = {
   C: { label: 'Difficile', min: 1.04, max: 1.35 },
 };
 
-const PATTERNS = [
-  ['A', 'B', 'B', 'A', 'C'],
-  ['B', 'A', 'B', 'C', 'A'],
-  ['A', 'A', 'B', 'C', 'C'],
+// Plus la série grimpe, plus les motifs penchent vers les duels serrés.
+// Le palier est réévalué au début de chaque cycle de 5, donc une série cassée
+// ramène aux motifs les plus faciles.
+const PATTERN_SETS = [
+  {
+    from: 0,
+    patterns: [
+      ['A', 'B', 'B', 'A', 'C'],
+      ['B', 'A', 'B', 'C', 'A'],
+      ['A', 'A', 'B', 'C', 'C'],
+    ],
+  },
+  {
+    from: 50,
+    patterns: [
+      ['B', 'B', 'A', 'C', 'C'],
+      ['B', 'A', 'B', 'C', 'B'],
+      ['C', 'B', 'B', 'B', 'C'],
+    ],
+  },
+  {
+    from: 100,
+    patterns: [
+      ['C', 'C', 'C', 'C', 'A'],
+      ['B', 'B', 'C', 'B', 'B'],
+      ['C', 'B', 'C', 'B', 'C'],
+    ],
+  },
 ];
 
 const BEST_KEY = 'lb-duel-record';
 
-let pattern = PATTERNS[0];
+let pattern = [];
 let patternStep = 0;
 let streak = 0;
 let bestStreak = 0;
@@ -978,11 +1002,21 @@ function tierOf(r) {
   return 'C';
 }
 
+function patternsFor(score) {
+  let choix = PATTERN_SETS[0].patterns;
+  for (const set of PATTERN_SETS) {
+    if (score >= set.from) choix = set.patterns;
+  }
+  return choix;
+}
+
 // Le pattern donne la difficulté des 5 prochains duels. Au bout des 5, on en
-// retire un au hasard — éventuellement le même.
+// retire un au hasard — éventuellement le même — dans le jeu de motifs
+// correspondant à la série en cours.
 function nextTier() {
   if (patternStep >= pattern.length) {
-    pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
+    const choix = patternsFor(streak);
+    pattern = choix[Math.floor(Math.random() * choix.length)];
     patternStep = 0;
   }
   return pattern[patternStep++];
