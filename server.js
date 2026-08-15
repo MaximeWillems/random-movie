@@ -76,22 +76,50 @@ app.get('/api/watchlist/:username', async (req, res) => {
   }
 });
 
+function decodeEntities(text) {
+  return cheerio.load('<x>' + text + '</x>').text();
+}
+
+// Le flux RSS liste les 50 derniers visionnages. Il complète /films/, qui est
+// trié par date de sortie : le RSS y ajoute les films plus anciens revus
+// récemment.
+async function scrapeRss(username) {
+  const resp = await fetch('https://letterboxd.com/' + username + '/rss/', { headers: HEADERS });
+  if (!resp.ok) return [];
+
+  const films = [];
+  for (const match of (await resp.text()).matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+    const item = match[1];
+    const title = item.match(/<letterboxd:filmTitle>([\s\S]*?)<\/letterboxd:filmTitle>/);
+    const link = item.match(/letterboxd\.com\/[^\/]+\/film\/([a-z0-9-]+)\//);
+    if (!title || !link) continue;
+
+    const year = item.match(/<letterboxd:filmYear>(\d{4})<\/letterboxd:filmYear>/);
+    films.push({ slug: link[1], name: decodeEntities(title[1]), year: year ? year[1] : '' });
+  }
+  return films;
+}
+
+// Films vus. Letterboxd bloque /{user}/films/page/N/ (403), mais laisse passer
+// /{user}/films/ : on récupère donc la première page seulement, complétée par
+// le RSS. Une centaine de films au total, pas l'historique complet.
 app.get('/api/seen/:username', async (req, res) => {
   const { username } = req.params;
-  const allFilms = [];
-  let page = 1;
 
   try {
-    while (page <= 100) {
-      const url = 'https://letterboxd.com/' + username + '/films/page/' + page + '/';
-      const { films, hasNext, notFound } = await scrapePage(url);
-      if (notFound && page === 1) return res.status(404).json({ error: 'Profil introuvable.' });
-      allFilms.push(...films);
-      if (!hasNext) break;
-      page++;
-      await new Promise(r => setTimeout(r, 250));
+    const { films, notFound } = await scrapePage('https://letterboxd.com/' + username + '/films/');
+    if (notFound) {
+      return res.status(404).json({ error: 'Profil introuvable, films masqués, ou accès temporairement bloqué par Letterboxd.' });
     }
-    res.json({ username, count: allFilms.length, films: allFilms });
+
+    const bySlug = new Map();
+    for (const f of films) bySlug.set(f.slug, f);
+    for (const f of await scrapeRss(username)) {
+      if (!bySlug.has(f.slug)) bySlug.set(f.slug, f);
+    }
+
+    const all = [...bySlug.values()];
+    res.json({ username, count: all.length, films: all, partial: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

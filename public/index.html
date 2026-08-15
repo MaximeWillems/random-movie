@@ -290,6 +290,14 @@
     margin-bottom: 1rem;
   }
 
+  .duel-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
   .duel {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -455,13 +463,16 @@
 <section id="viewDuel" hidden>
   <div class="duel-source">
     <button class="src-btn -active" id="srcPopular" onclick="setDuelSource('popular')">Films populaires</button>
+    <button class="src-btn" id="srcSeen" onclick="setDuelSource('seen')">Mes films vus</button>
     <button class="src-btn" id="srcWatchlist" onclick="setDuelSource('watchlist')">Ma watchlist</button>
   </div>
 
   <div class="input-group" id="duelUserGroup" hidden>
     <input type="text" id="duelUsername" placeholder="Nom d'utilisateur Letterboxd…" autocomplete="off" />
-    <button id="duelLoadBtn" onclick="loadDuelWatchlist()">Charger</button>
+    <button id="duelLoadBtn" onclick="loadDuelUser()">Charger</button>
   </div>
+
+  <p class="duel-note" id="duelNote" hidden></p>
 
   <div class="error" id="duelError"></div>
 
@@ -669,6 +680,15 @@ function setMode(mode) {
   if (isDuel && !duelPair && duelSource === 'popular') startDuel();
 }
 
+// Letterboxd ne laisse pas lire l'historique complet : /{user}/films/page/N/
+// répond 403. On récupère la première page de /films/ plus le flux RSS, soit
+// une centaine de films vus.
+const SOURCES = {
+  popular:   { label: 'populaires' },
+  seen:      { label: 'vus', path: '/api/seen/', note: 'Letterboxd ne donne pas accès à tout l\'historique : le duel se joue sur une centaine de films vus (les sorties les plus récentes et les visionnages récents).' },
+  watchlist: { label: 'de la watchlist', path: '/api/watchlist/', note: 'La watchlist est lue en entier — le pool est plus large qu\'en films vus.' },
+};
+
 function setDuelSource(src) {
   if (duelSource === src) return;
   duelSource = src;
@@ -677,12 +697,19 @@ function setDuelSource(src) {
   duelPool = [];
   recentPairs = [];
 
-  document.getElementById('srcPopular').classList.toggle('-active', src === 'popular');
-  document.getElementById('srcWatchlist').classList.toggle('-active', src === 'watchlist');
-  document.getElementById('duelUserGroup').hidden = src !== 'watchlist';
+  for (const [key, id] of [['popular', 'srcPopular'], ['seen', 'srcSeen'], ['watchlist', 'srcWatchlist']]) {
+    document.getElementById(id).classList.toggle('-active', src === key);
+  }
+
+  const note = document.getElementById('duelNote');
+  note.textContent = SOURCES[src].note || '';
+  note.hidden = !SOURCES[src].note;
+
+  document.getElementById('duelUserGroup').hidden = src === 'popular';
   document.getElementById('duelGame').hidden = true;
   hideDuelError();
   setDuelLoading(false);
+  updatePoolLabel();
 
   if (src === 'popular') {
     startDuel();
@@ -720,9 +747,9 @@ async function startDuel() {
   }
 }
 
-async function loadDuelWatchlist() {
+async function loadDuelUser() {
   const user = document.getElementById('duelUsername').value.trim();
-  if (!user) return;
+  if (!user || duelSource === 'popular') return;
 
   const token = ++topUpToken;
   duelPair = null;
@@ -731,11 +758,11 @@ async function loadDuelWatchlist() {
   document.getElementById('duelGame').hidden = true;
   document.getElementById('duelLoadBtn').disabled = true;
   hideDuelError();
-  setDuelLoading(true, 'Récupération de la watchlist…');
+  setDuelLoading(true, duelSource === 'seen' ? 'Récupération des films vus…' : 'Récupération de la watchlist…');
 
   try {
     const pool = await loadPopularPool();
-    const resp = await fetch(`${API_BASE}/api/watchlist/${encodeURIComponent(user)}`);
+    const resp = await fetch(`${API_BASE}${SOURCES[duelSource].path}${encodeURIComponent(user)}`);
     const data = await resp.json();
     if (token !== topUpToken) return;
 
@@ -745,7 +772,9 @@ async function loadDuelWatchlist() {
       return;
     }
     if (!data.films.length) {
-      showDuelError('La watchlist est vide ou le profil est privé.');
+      showDuelError(duelSource === 'seen'
+        ? 'Aucun film vu trouvé — le profil est peut-être privé.'
+        : 'La watchlist est vide ou le profil est privé.');
       setDuelLoading(false);
       return;
     }
@@ -806,8 +835,13 @@ async function topUpPool(slugs, token) {
 
   if (token !== topUpToken) return;
   setDuelLoading(false);
-  if (duelPool.length < 2) showDuelError('Pas assez de films exploitables dans cette watchlist.');
-  else if (!duelPair) newDuel();
+  if (duelPool.length < 2) {
+    showDuelError(duelSource === 'seen'
+      ? 'Pas assez de films vus exploitables pour lancer des duels.'
+      : 'Pas assez de films exploitables dans cette watchlist.');
+  } else if (!duelPair) {
+    newDuel();
+  }
 }
 
 function sortPool(list) {
@@ -937,8 +971,7 @@ function countUp(el, target) {
 
 function updatePoolLabel() {
   const n = duelPool.length;
-  const label = duelSource === 'watchlist' ? 'de la watchlist' : 'populaires';
-  document.getElementById('duelPoolLabel').textContent = n ? `${n} films ${label}` : '';
+  document.getElementById('duelPoolLabel').textContent = n ? `${n} films ${SOURCES[duelSource].label}` : '';
 }
 
 function setDuelLoading(on, msg) {
@@ -961,7 +994,7 @@ function shuffle(arr) {
 }
 
 document.getElementById('duelUsername').addEventListener('keydown', e => {
-  if (e.key === 'Enter') loadDuelWatchlist();
+  if (e.key === 'Enter') loadDuelUser();
 });
 
 document.addEventListener('keydown', e => {

@@ -35,11 +35,15 @@ Puis ouvrir http://localhost:3000
 Deux films côte à côte : clique sur celui que tu crois le plus populaire. Les
 deux compteurs se révèlent, puis on enchaîne. Mode infini, pas de score.
 
-Deux sources au choix :
+Trois sources au choix :
 
 - **Films populaires** — le pool pré-calculé de `public/films.json`
-- **Ma watchlist** — les films de ta watchlist, jouables dès que quelques-uns
-  sont prêts ; le reste se charge en tâche de fond pendant que tu joues
+- **Mes films vus** — une centaine de films vus (voir la limite plus bas)
+- **Ma watchlist** — la watchlist complète, donc un pool plus large
+
+Pour les deux sources liées à un profil, les films déjà présents dans le pool
+sont jouables immédiatement ; les autres se chargent en tâche de fond pendant
+que tu joues.
 
 Au clavier : **←** / **→** pour voter, **Entrée** pour le duel suivant.
 
@@ -78,12 +82,18 @@ ce qui contraint pas mal l'architecture :
 
 | Route | État |
 |---|---|
-| `/{user}/watchlist/page/N/` | ✅ accessible |
+| `/{user}/watchlist/page/N/` | ✅ accessible, paginable |
 | `/film/{slug}/` | ✅ accessible (titre, année, poster, `ratingCount`) |
-| `/{user}/rss/` | ✅ accessible (50 derniers films vus) |
+| `/{user}/rss/` | ✅ accessible (50 derniers visionnages) |
+| `/{user}/films/` | ✅ accessible — **mais première page seulement** (72 films) |
+| `/{user}/films/page/N/` | ❌ 403, y compris `page/1` |
 | `/films/popular/` | ❌ 403 |
-| `/{user}/films/` et `/{user}/films/diary/` | ❌ 403 |
+| `/{user}/films/diary/`, `/{user}/likes/films/` | ❌ 403 |
 | `/csi/film/{slug}/stats/` | ❌ 403 |
+
+Le cas de `/films/` est le plus surprenant : l'URL nue passe, la forme paginée
+non — y compris `page/1`, qui affiche pourtant la même chose. D'où la limite
+sur les films vus.
 
 C'est pour ça que le pool est construit hors ligne par `scripts/build-pool.js` :
 faute de pouvoir lire `/films/popular/`, le script part d'une liste de films
@@ -96,5 +106,8 @@ connus et suit les « films similaires » de page en page.
 - ~250 ms entre chaque page pour ne pas surcharger Letterboxd
 - Les films en dessous de 3 000 notes sont écartés des duels (deviner entre
   400 et 600 notes tiendrait du pile ou face)
-- `/api/seen/:username` ne fonctionne plus : la route Letterboxd qu'il scrape
-  renvoie 403 (voir le tableau ci-dessus)
+- **Films vus : une centaine au maximum**, pas l'historique complet. La
+  pagination de `/{user}/films/` étant bloquée, `/api/seen/:username` combine
+  la première page (72 films, triés par date de sortie) et le flux RSS (50
+  derniers visionnages, qui ramène des films plus anciens). Pour un pool plus
+  large, utiliser la source watchlist.
