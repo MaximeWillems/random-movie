@@ -283,12 +283,51 @@
   .src-btn:hover { background: var(--surface2); color: var(--text); }
   .src-btn.-active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
 
+  .duel-scores {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .score-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+  }
+  .score-item b { color: var(--text); font-weight: 600; }
+  .score-item.-record b { color: #f5c518; }
+  .score-item.-neuf {
+    border-color: #f5c518;
+    transition: border-color 0.4s;
+  }
+
   .duel-question {
     text-align: center;
     font-size: 14px;
     color: var(--muted);
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
   }
+
+  .tier-badge {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 1rem;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 20px;
+    padding: 3px 12px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .tier-badge.-a { color: var(--accent); border-color: #1c5c2e; background: #122a18; }
+  .tier-badge.-b { color: #e0a92c; border-color: #5c4a1c; background: #2a2412; }
+  .tier-badge.-c { color: #f88; border-color: #6a2a2a; background: #2a1414; }
 
   .duel-note {
     text-align: center;
@@ -482,7 +521,13 @@
   </div>
 
   <div id="duelGame" hidden>
+    <div class="duel-scores">
+      <span class="score-item" id="scoreCurrentBox">Série <b id="scoreCurrent">0</b></span>
+      <span class="score-item -record" id="scoreBestBox">Record <b id="scoreBest">0</b></span>
+    </div>
+
     <p class="duel-question">Lequel a le plus de notes sur Letterboxd ?</p>
+    <span class="tier-badge" id="tierBadge"></span>
 
     <div class="duel" id="duel">
       <button class="contender" id="c0" onclick="vote(0)">
@@ -662,6 +707,29 @@ const MIN_RATINGS = 3000;
 // Le tirage est biaisé vers le haut du classement — sans ça, une watchlist
 // pointue ne proposerait que des duels entre films inconnus.
 const POPULARITY_BIAS = 1.8;
+
+// Difficulté = écart de popularité entre les deux films. Plus l'écart est
+// serré, plus il faut connaître ses chiffres.
+// Le palier facile est plafonné : au-delà, on oppose un blockbuster à un film
+// que personne ne connaît, ce qui n'est plus un duel.
+const TIERS = {
+  A: { label: 'Facile',    min: 2.5,  max: 12 },
+  B: { label: 'Moyen',     min: 1.35, max: 2.5 },
+  C: { label: 'Difficile', min: 1.04, max: 1.35 },
+};
+
+const PATTERNS = [
+  ['A', 'B', 'B', 'A', 'C'],
+  ['B', 'A', 'B', 'C', 'A'],
+  ['A', 'A', 'B', 'C', 'C'],
+];
+
+const BEST_KEY = 'lb-duel-record';
+
+let pattern = PATTERNS[0];
+let patternStep = 0;
+let streak = 0;
+let bestStreak = 0;
 
 let popularPool = null;
 let duelPool = [];
@@ -859,40 +927,69 @@ function acceptPair(a, b) {
   return Math.random() < 0.5 ? [a, b] : [b, a];
 }
 
-// Deux films proches dans le classement : l'écart reste devinable sans être
-// une évidence. Un écart de moins de 4 % reviendrait à jouer à pile ou face.
-function pickPair() {
+function ratio(a, b) {
+  const lo = Math.min(a.ratingCount, b.ratingCount);
+  return lo ? Math.max(a.ratingCount, b.ratingCount) / lo : 0;
+}
+
+// Ancre tirée vers le haut du classement, puis adversaire choisi parmi ceux
+// qui tombent dans la fourchette d'écart du palier demandé.
+function pickPairInTier(tier) {
+  const band = TIERS[tier];
   const n = duelPool.length;
-  if (n < 2) return null;
-
-  const maxGap = Math.max(3, Math.min(45, Math.round(n * 0.15)));
-  const minGap = Math.min(2, maxGap);
-
-  for (let t = 0; t < 80; t++) {
-    const i = Math.floor(Math.pow(Math.random(), POPULARITY_BIAS) * n);
-    const gap = minGap + Math.floor(Math.random() * (maxGap - minGap + 1));
-    const j = Math.random() < 0.5 ? i - gap : i + gap;
-    if (j < 0 || j >= n) continue;
-
-    const a = duelPool[i];
-    const b = duelPool[j];
-    const hi = Math.max(a.ratingCount, b.ratingCount);
-    const lo = Math.min(a.ratingCount, b.ratingCount);
-    if (!lo || hi / lo < 1.04) continue;
-    if (recentPairs.includes(pairKey(a, b))) continue;
-    return acceptPair(a, b);
-  }
 
   for (let t = 0; t < 40; t++) {
-    const a = duelPool[Math.floor(Math.random() * n)];
-    const b = duelPool[Math.floor(Math.random() * n)];
-    if (a !== b && a.ratingCount !== b.ratingCount) return acceptPair(a, b);
+    const a = duelPool[Math.floor(Math.pow(Math.random(), POPULARITY_BIAS) * n)];
+    const candidats = duelPool.filter(b => {
+      if (b === a) return false;
+      const r = ratio(a, b);
+      return r >= band.min && r < band.max && !recentPairs.includes(pairKey(a, b));
+    });
+    if (candidats.length) {
+      return acceptPair(a, candidats[Math.floor(Math.random() * candidats.length)]);
+    }
   }
   return null;
 }
 
+// Renvoie [paire, palier réellement obtenu]. Un petit pool ne permet pas
+// toujours de servir le palier demandé : on se rabat sur le plus proche
+// plutôt que de ne rien proposer.
+function pickPair(tier) {
+  if (duelPool.length < 2) return [null, tier];
+
+  const ordre = { A: ['A', 'B', 'C'], B: ['B', 'C', 'A'], C: ['C', 'B', 'A'] }[tier] || ['B', 'A', 'C'];
+  for (const t of ordre) {
+    const pair = pickPairInTier(t);
+    if (pair) return [pair, t];
+  }
+
+  for (let t = 0; t < 40; t++) {
+    const a = duelPool[Math.floor(Math.random() * duelPool.length)];
+    const b = duelPool[Math.floor(Math.random() * duelPool.length)];
+    if (a !== b && a.ratingCount !== b.ratingCount) return [acceptPair(a, b), tierOf(ratio(a, b))];
+  }
+  return [null, tier];
+}
+
+function tierOf(r) {
+  if (r >= TIERS.A.min) return 'A';
+  if (r >= TIERS.B.min) return 'B';
+  return 'C';
+}
+
+// Le pattern donne la difficulté des 5 prochains duels. Au bout des 5, on en
+// retire un au hasard — éventuellement le même.
+function nextTier() {
+  if (patternStep >= pattern.length) {
+    pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
+    patternStep = 0;
+  }
+  return pattern[patternStep++];
+}
+
 function newDuel() {
-  const pair = pickPair();
+  const [pair, tier] = pickPair(nextTier());
   if (!pair) {
     showDuelError('Pas assez de films pour lancer un duel.');
     return;
@@ -900,6 +997,10 @@ function newDuel() {
 
   duelPair = pair;
   duelRevealed = false;
+
+  const badge = document.getElementById('tierBadge');
+  badge.textContent = TIERS[tier].label;
+  badge.className = 'tier-badge -' + tier.toLowerCase();
 
   hideDuelError();
   document.getElementById('duelGame').hidden = false;
@@ -947,12 +1048,54 @@ function vote(side) {
     countUp(document.getElementById('c' + k + 'count'), film.ratingCount);
   });
 
+  const record = applyScore(correct);
+
   const verdict = document.getElementById('duelVerdict');
-  verdict.textContent = correct ? '✓ Bien vu' : '✗ Raté';
+  verdict.textContent = record ? '✓ Nouveau record !' : (correct ? '✓ Bien vu' : '✗ Raté');
   verdict.className = 'duel-verdict ' + (correct ? '-ok' : '-ko');
 
   document.getElementById('nextBtn').hidden = false;
 }
+
+// Série en cours, remise à zéro à la première erreur. Renvoie true si le
+// record vient d'être battu.
+function applyScore(correct) {
+  streak = correct ? streak + 1 : 0;
+
+  let record = false;
+  if (streak > bestStreak) {
+    bestStreak = streak;
+    record = streak > 1;
+    try {
+      localStorage.setItem(BEST_KEY, String(bestStreak));
+    } catch (e) {
+      // navigation privée ou stockage refusé : le record reste en mémoire
+    }
+  }
+
+  renderScores();
+  if (record) {
+    const box = document.getElementById('scoreBestBox');
+    box.classList.add('-neuf');
+    setTimeout(() => box.classList.remove('-neuf'), 900);
+  }
+  return record;
+}
+
+function renderScores() {
+  document.getElementById('scoreCurrent').textContent = streak;
+  document.getElementById('scoreBest').textContent = bestStreak;
+}
+
+function loadBestStreak() {
+  try {
+    bestStreak = parseInt(localStorage.getItem(BEST_KEY), 10) || 0;
+  } catch (e) {
+    bestStreak = 0;
+  }
+  renderScores();
+}
+loadBestStreak();
 
 function countUp(el, target) {
   // Valeur finale posée d'emblée : si l'onglet est en arrière-plan, les frames

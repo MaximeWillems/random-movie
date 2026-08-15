@@ -33,7 +33,36 @@ Puis ouvrir http://localhost:3000
 ### Mode duel
 
 Deux films côte à côte : clique sur celui que tu crois le plus populaire. Les
-deux compteurs se révèlent, puis on enchaîne. Mode infini, pas de score.
+deux compteurs se révèlent, puis on enchaîne. Mode infini.
+
+**Série et record.** La série compte les bonnes réponses d'affilée et retombe à
+zéro à la première erreur. Le record est gardé dans le `localStorage` du
+navigateur (clé `lb-duel-record`), tous modes confondus.
+
+**Difficulté.** Chaque duel a un palier, affiché sous la question, défini par
+l'écart de popularité entre les deux films :
+
+| Palier | Écart | Exemple réel |
+|---|---|---|
+| Facile | 2,5× à 12× | Paprika (636 635) vs Half Nelson (96 751) |
+| Moyen | 1,35× à 2,5× | Backrooms (2 609 721) vs The Imitation Game (1 159 810) |
+| Difficile | 1,04× à 1,35× | Parasite (5 658 436) vs Pulp Fiction (4 431 116) |
+
+Le palier facile est **plafonné à 12×** : au-delà, on opposerait un blockbuster
+à un film que personne ne connaît, ce qui n'a plus grand intérêt.
+
+Les paliers s'enchaînent par séries de 5 selon l'un de ces motifs, retiré au
+hasard à chaque cycle (le même peut ressortir) :
+
+```
+A B B A C     A = Facile
+B A B C A     B = Moyen
+A A B C C     C = Difficile
+```
+
+Quand le pool est trop petit pour servir le palier demandé, le duel se rabat
+sur le palier le plus proche plutôt que de ne rien proposer — c'est le cas
+quelques fois sur soixante avec une centaine de films.
 
 Trois sources au choix :
 
