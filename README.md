@@ -39,17 +39,38 @@ deux compteurs se révèlent, puis on enchaîne. Mode infini.
 zéro à la première erreur. Le record est gardé dans le `localStorage` du
 navigateur (clé `lb-duel-record`), tous modes confondus.
 
-**Difficulté.** Chaque duel a un palier, affiché sous la question, défini par
-l'écart de popularité entre les deux films :
+**Difficulté.** Chaque duel a un palier, affiché sous la question. Il ne
+dépend pas seulement de l'écart de notes, parce que le nombre de notes est un
+mauvais indicateur de notoriété pris isolément. Trois choses entrent en compte :
 
-| Palier | Écart | Exemple réel |
-|---|---|---|
-| Facile | 2,5× à 12× | Paprika (636 635) vs Half Nelson (96 751) |
-| Moyen | 1,35× à 2,5× | Backrooms (2 609 721) vs The Imitation Game (1 159 810) |
-| Difficile | 1,04× à 1,35× | Parasite (5 658 436) vs Pulp Fiction (4 431 116) |
+- **L'écart**, en échelle logarithmique — un rapport de 2 est deux fois plus
+  lisible qu'un rapport de 1,4, pas 40 % de plus.
+- **L'âge des films.** Letterboxd sous-estime les vieux titres : peu de membres
+  les ont encodés, donc leur compteur ne reflète pas leur notoriété réelle. La
+  pondération descend de 1 (film récent) à 0,5 (60 ans et plus).
+- **Le volume absolu.** Entre 10 000 et 50 000 notes, l'écart a beau être de
+  5×, personne n'a d'intuition sur des chiffres pareils. La pondération monte
+  de 0,45 (~10 000 notes) à 1 (au-delà de ~3 millions).
 
-Le palier facile est **plafonné à 12×** : au-delà, on opposerait un blockbuster
-à un film que personne ne connaît, ce qui n'a plus grand intérêt.
+Le score obtenu est `log2(écart) × pondération d'âge × pondération de volume`,
+et ce sont les seuils **1,30** et **0,42** qui séparent les trois paliers. Pour
+deux films récents et très vus, les pondérations valent 1 et on retrouve des
+seuils d'écart de 2,5× et 1,35×.
+
+Ce que ça change concrètement :
+
+| Duel | Écart | Score | Palier |
+|---|---|---|---|
+| 10 000 vs 50 000 notes, films récents | 5× | 1,18 | Moyen |
+| Même écart, mais 1 M vs 5 M de notes | 5× | 2,17 | Facile |
+| 10 000 vs 50 000 notes, films de 1960 | 5× | 0,61 | Moyen |
+| Parasite vs Pulp Fiction | 1,28× | 0,34 | Difficile |
+| Deux classiques des années 50 au même écart | 1,25× | 0,13 | Difficile |
+
+Deux garde-fous s'ajoutent, indépendants du palier : l'écart est **plafonné à
+12×** et au moins un des deux films doit dépasser **120 000 notes**. Sans ça on
+finit par opposer deux films que personne ne connaît, ce qui n'est pas
+difficile mais arbitraire.
 
 Les paliers s'enchaînent par séries de 5 selon un motif retiré au hasard à
 chaque cycle (le même peut ressortir). Plus la série monte, plus les motifs
