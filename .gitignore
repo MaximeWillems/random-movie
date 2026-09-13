@@ -1,2 +1,3 @@
 node_modules
 scripts/.crawl-frontier.json
+scripts/.gems-state.json

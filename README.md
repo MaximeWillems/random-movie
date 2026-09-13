@@ -30,6 +30,33 @@ Puis ouvrir http://localhost:3000
 2. Un film est tiré au hasard avec sa fiche (poster, synopsis, genres) via TMDB
 3. **🎲 Autre film** pour en tirer un nouveau
 
+### Pépites inconnues
+
+Dans le mode hasard, l'onglet **💎 Pépites inconnues** tire un film peu connu
+mais bien noté : **moins de 5 000 notes sur Letterboxd, au moins 3/5**. Letterboxd
+bloque le nombre de vues, c'est donc le nombre de notes qui sert de mesure.
+
+- **Pseudo facultatif** : s'il est renseigné, les films déjà vus sont écartés.
+  La vérification se fait film par film via `/{user}/film/{slug}/`, qui répond
+  200 si le membre l'a vu et 404 sinon (y compris s'il est seulement dans sa
+  watchlist)
+- **Où le voir** : liens légaux uniquement — offres connues de TMDB (données
+  JustWatch, Belgique puis France), copie libre de droits sur Internet Archive
+  (même titre, même année, licence déclarée), et recherche YouTube / Vimeo,
+  où les réalisateurs publient souvent eux-mêmes leurs courts métrages
+
+La sélection vient de `public/gems.json`, construit à l'avance :
+
+```bash
+node scripts/build-gems.js 200
+```
+
+Aucune page Letterboxd lisible ne liste les films peu vus, le script passe donc
+par les filmographies (`/director/…`, `/actor/…`, accessibles) et les films
+similaires, en partant des réalisateurs les moins populaires du pool de duel.
+Il reprend là où il s'était arrêté (état dans `scripts/.gems-state.json`, non
+versionné).
+
 ### Mode duel
 
 Deux films côte à côte : clique sur celui que tu crois le plus populaire. Les

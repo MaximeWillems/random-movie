@@ -233,6 +233,33 @@
     flex-shrink: 0;
   }
 
+  /* Pépites */
+  .gem-stats {
+    font-size: 12px;
+    color: #f5c518;
+    line-height: 1.5;
+  }
+  .gem-stats span { color: var(--muted); }
+
+  .watch-box {
+    border-top: 1px solid var(--border);
+    padding: 0.8rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .watch-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .watch-found, .watch-search { display: flex; flex-wrap: wrap; gap: 6px; }
+  .watch-found:empty { display: none; }
+  .watch-link.-found { border-color: var(--accent); color: var(--accent); }
+  .watch-hint { font-size: 12px; color: var(--muted); }
+
   /* Rating stars */
   .tmdb-rating {
     font-size: 12px;
@@ -459,9 +486,16 @@
   </nav>
 
 <section id="viewRandom">
+  <div class="duel-source">
+    <button class="src-btn -active" id="rndWatchlist" onclick="setRandomSource('watchlist')">Ma watchlist</button>
+    <button class="src-btn" id="rndGems" onclick="setRandomSource('gems')">💎 Pépites inconnues</button>
+  </div>
+
+  <p class="duel-note" id="gemNote" hidden>Des films de moins de 5 000 notes sur Letterboxd, notés au moins 3/5. Le pseudo est facultatif : il sert à écarter les films que tu as déjà vus.</p>
+
   <div class="input-group">
     <input type="text" id="username" placeholder="Nom d'utilisateur Letterboxd…" autocomplete="off" />
-    <button id="loadBtn" onclick="loadWatchlist()">Charger</button>
+    <button id="loadBtn" onclick="loadRandom()">Charger</button>
   </div>
 
   <div class="error" id="error"></div>
@@ -480,6 +514,7 @@
       <div class="film-info">
         <div class="film-title" id="filmTitle">—</div>
         <div class="film-year" id="filmYear"></div>
+        <div class="gem-stats" id="gemStats" hidden></div>
         <div class="genres" id="genres"></div>
         <div class="overview" id="overview"></div>
         <div class="film-links">
@@ -491,6 +526,11 @@
           </a>
         </div>
       </div>
+    </div>
+    <div class="watch-box" id="watchBox" hidden>
+      <div class="watch-title">Où le voir</div>
+      <div class="watch-found" id="watchFound"></div>
+      <div class="watch-search" id="watchSearch"></div>
     </div>
     <div class="film-bottom">
       <span class="count-label" id="countLabel"></span>
@@ -572,6 +612,32 @@ let watchlist = [];
 let currentUser = '';
 let seenHistory = new Set();
 
+let randomSource = 'watchlist';
+let gems = null;
+let gemHistory = new Set();
+let pickToken = 0;
+
+function setRandomSource(src) {
+  randomSource = src;
+  const isGems = src === 'gems';
+  document.getElementById('rndWatchlist').classList.toggle('-active', !isGems);
+  document.getElementById('rndGems').classList.toggle('-active', isGems);
+  document.getElementById('gemNote').hidden = !isGems;
+  document.getElementById('username').placeholder = isGems
+    ? 'Nom d\'utilisateur Letterboxd (facultatif)…'
+    : 'Nom d\'utilisateur Letterboxd…';
+  document.getElementById('loadBtn').textContent = isGems ? '💎 Tirer une pépite' : 'Charger';
+  document.getElementById('filmCard').style.display = 'none';
+  pickToken++;
+  hideError();
+  setLoading(false);
+}
+
+function loadRandom() {
+  if (randomSource === 'gems') pickGem();
+  else loadWatchlist();
+}
+
 async function loadWatchlist() {
   const username = document.getElementById('username').value.trim();
   if (!username) return;
@@ -610,6 +676,7 @@ async function loadWatchlist() {
 }
 
 async function pickRandom() {
+  if (randomSource === 'gems') return pickGem();
   if (watchlist.length === 0) return;
 
   // Avoid showing same film twice in a row
@@ -621,16 +688,7 @@ async function pickRandom() {
 
   const film = available[Math.floor(Math.random() * available.length)];
   seenHistory.add(film.slug);
-
-  document.getElementById('filmCard').style.display = 'block';
-  document.getElementById('filmTitle').textContent = film.name || film.slug;
-  document.getElementById('filmYear').textContent = film.year ? `(${film.year})` : '';
-  document.getElementById('genres').innerHTML = '';
-  document.getElementById('overview').textContent = '';
-  document.getElementById('lbLink').href = `https://letterboxd.com/film/${film.slug}/`;
-  document.getElementById('tmdbLink').href = '#';
-  document.getElementById('posterImg').style.display = 'none';
-  document.getElementById('posterPlaceholder').style.display = 'flex';
+  resetCard(film);
 
   // Fetch from TMDB
   try {
@@ -688,9 +746,240 @@ function showError(msg) {
 }
 function hideError() { document.getElementById('error').style.display = 'none'; }
 
+function resetCard(film) {
+  document.getElementById('filmCard').style.display = 'block';
+  document.getElementById('filmTitle').textContent = film.name || film.slug;
+  document.getElementById('filmYear').textContent = film.year ? `(${film.year})` : '';
+  document.getElementById('genres').innerHTML = '';
+  document.getElementById('overview').textContent = '';
+  document.getElementById('lbLink').href = `https://letterboxd.com/film/${film.slug}/`;
+  document.getElementById('tmdbLink').href = '#';
+  document.getElementById('posterImg').style.display = 'none';
+  document.getElementById('posterPlaceholder').style.display = 'flex';
+  document.getElementById('gemStats').hidden = true;
+  document.getElementById('watchBox').hidden = true;
+}
+
 document.getElementById('username').addEventListener('keydown', e => {
-  if (e.key === 'Enter') loadWatchlist();
+  if (e.key === 'Enter') loadRandom();
 });
+
+
+// ============ Pépites ============
+// public/gems.json est construit par scripts/build-gems.js : des films de
+// moins de 5 000 notes sur Letterboxd, notés au moins 3/5.
+
+async function loadGems() {
+  if (gems) return gems;
+  const resp = await fetch('gems.json');
+  if (!resp.ok) throw new Error('gems.json introuvable');
+  gems = await resp.json();
+  return gems;
+}
+
+async function pickGem() {
+  const token = ++pickToken;
+  const user = document.getElementById('username').value.trim();
+  hideError();
+  setLoading(true);
+  setStatus(user ? 'Recherche d\'une pépite que tu n\'as pas vue…' : 'Recherche d\'une pépite…');
+
+  try {
+    const pool = await loadGems();
+    if (!pool.length) {
+      showError('Aucune pépite disponible — lance `node scripts/build-gems.js`.');
+      return;
+    }
+
+    // Chaque vérification « déjà vu » coûte une requête à Letterboxd : on
+    // abandonne après quelques films déjà vus plutôt que de faire attendre.
+    for (let tries = 0; tries < 8; tries++) {
+      let available = pool.filter(g => !gemHistory.has(g.slug));
+      if (!available.length) {
+        gemHistory.clear();
+        available = pool;
+      }
+      const gem = available[Math.floor(Math.random() * available.length)];
+      gemHistory.add(gem.slug);
+
+      if (!user) {
+        showGem(gem, token, '');
+        return;
+      }
+
+      const check = await hasSeen(user, gem.slug);
+      if (token !== pickToken) return;
+      if (check.notFound) {
+        showError(check.error);
+        return;
+      }
+      if (check.failed) {
+        showGem(gem, token, 'impossible de vérifier si tu l\'as déjà vu');
+        return;
+      }
+      if (!check.seen) {
+        showGem(gem, token, '');
+        return;
+      }
+    }
+    showError('Les dernières pépites tirées sont toutes déjà vues. Réessaie.');
+  } catch (e) {
+    showError('Impossible de charger les pépites.');
+  } finally {
+    if (token === pickToken) setLoading(false);
+  }
+}
+
+async function hasSeen(user, slug) {
+  try {
+    const resp = await fetch(`${API_BASE}/api/has-seen/${encodeURIComponent(user)}/${encodeURIComponent(slug)}`);
+    const data = await resp.json();
+    if (resp.status === 404) return { notFound: true, error: data.error || 'Profil introuvable.' };
+    if (!resp.ok) return { failed: true };
+    return { seen: data.seen };
+  } catch (e) {
+    return { failed: true };
+  }
+}
+
+function showGem(gem, token, warning) {
+  resetCard(gem);
+
+  if (gem.poster) {
+    const img = document.getElementById('posterImg');
+    img.src = gem.poster;
+    img.alt = gem.name;
+    img.onload = () => {
+      document.getElementById('posterPlaceholder').style.display = 'none';
+      img.style.display = 'block';
+    };
+  }
+
+  const stats = document.getElementById('gemStats');
+  const parts = [`💎 ${gem.ratingCount.toLocaleString('fr-FR')} notes`, `★ ${gem.rating.toFixed(1).replace('.', ',')}/5`];
+  if (gem.runtime && gem.runtime <= 40) parts.push(`court métrage, ${gem.runtime} min`);
+  else if (gem.runtime) parts.push(`${gem.runtime} min`);
+  stats.textContent = parts.join(' · ');
+  if (gem.directors && gem.directors.length) {
+    const by = document.createElement('span');
+    by.textContent = ' — de ' + gem.directors.join(', ');
+    stats.append(by);
+  }
+  stats.hidden = false;
+
+  document.getElementById('countLabel').textContent =
+    `${gems.length} pépite${gems.length > 1 ? 's' : ''} dans la sélection` + (warning ? ` · ${warning}` : '');
+
+  renderWatch(gem, token);
+  loadGemDetails(gem, token);
+}
+
+async function loadGemDetails(gem, token) {
+  try {
+    let t = null;
+    if (gem.tmdbId) {
+      const resp = await fetch(`https://api.themoviedb.org/3/movie/${gem.tmdbId}?api_key=${TMDB_KEY}&language=fr-FR`);
+      if (resp.ok) t = await resp.json();
+    } else {
+      t = await fetchTMDB(gem.name, gem.year);
+    }
+    if (!t) return;
+
+    // Films confidentiels : TMDB n'a souvent ni titre ni résumé en français.
+    // Il renvoie alors le titre original (parfois en coréen, russe…) : le
+    // titre Letterboxd, en anglais, est plus lisible. Et le résumé anglais
+    // vaut mieux qu'une fiche vide.
+    if (t.title === t.original_title && t.original_language !== 'fr') t.title = gem.name;
+    if (!t.overview) {
+      const en = await fetch(`https://api.themoviedb.org/3/movie/${t.id}?api_key=${TMDB_KEY}&language=en-US`);
+      if (en.ok) t.overview = (await en.json()).overview;
+    }
+
+    if (token === pickToken) applyTMDB(t);
+  } catch (e) {
+    console.warn('TMDB unavailable', e);
+  }
+}
+
+// Liens légaux uniquement : offres connues de TMDB (données JustWatch), copie
+// libre de droits sur Internet Archive, et recherche YouTube / Vimeo — c'est
+// souvent là que les réalisateurs publient eux-mêmes leurs courts métrages.
+async function renderWatch(gem, token) {
+  const found = document.getElementById('watchFound');
+  const search = document.getElementById('watchSearch');
+  found.textContent = '';
+  search.textContent = '';
+  document.getElementById('watchBox').hidden = false;
+
+  const q = `${gem.name} ${gem.year || ''}`.trim();
+  search.append(
+    watchLink('▶ Chercher sur YouTube', 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q)),
+    watchLink('Chercher sur Vimeo', 'https://vimeo.com/search?q=' + encodeURIComponent(q)),
+  );
+
+  const [offers, archive] = await Promise.all([tmdbOffers(gem.tmdbId), archiveCopy(gem)]);
+  if (token !== pickToken) return;
+
+  if (offers) found.append(watchLink(offers.label, offers.link, true));
+  if (archive) found.append(watchLink('📼 Internet Archive (libre de droits)', archive, true));
+  if (!offers && !archive) {
+    const hint = document.createElement('span');
+    hint.className = 'watch-hint';
+    hint.textContent = 'Aucune offre connue — essaie la recherche :';
+    found.append(hint);
+  }
+}
+
+function watchLink(label, href, found) {
+  const a = document.createElement('a');
+  a.className = 'film-link watch-link' + (found ? ' -found' : '');
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.textContent = label;
+  return a;
+}
+
+async function tmdbOffers(tmdbId) {
+  if (!tmdbId) return null;
+  try {
+    const resp = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}/watch/providers?api_key=${TMDB_KEY}`);
+    if (!resp.ok) return null;
+    const results = (await resp.json()).results || {};
+    for (const country of ['BE', 'FR']) {
+      const r = results[country];
+      if (!r) continue;
+      const stream = [...(r.flatrate || []), ...(r.free || []), ...(r.ads || [])].map(p => p.provider_name);
+      const buy = [...(r.rent || []), ...(r.buy || [])].map(p => p.provider_name);
+      const names = [...new Set(stream.length ? stream : buy)].slice(0, 3);
+      if (!names.length) continue;
+      return { label: `${stream.length ? '📺' : '🎟 location :'} ${names.join(', ')} (${country})`, link: r.link };
+    }
+  } catch (e) {
+    // TMDB injoignable : pas d'offre affichée
+  }
+  return null;
+}
+
+// Internet Archive héberge aussi des copies non autorisées : on ne garde qu'un
+// dépôt qui déclare une licence (domaine public ou Creative Commons), avec le
+// même titre et la même année que le film.
+async function archiveCopy(gem) {
+  if (!gem.year) return null;
+  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const q = `title:("${gem.name.replace(/"/g, '')}") AND mediatype:(movies) AND licenseurl:*`;
+  try {
+    const resp = await fetch('https://archive.org/advancedsearch.php?q=' + encodeURIComponent(q)
+      + '&fl[]=identifier&fl[]=title&fl[]=year&rows=20&output=json');
+    if (!resp.ok) return null;
+    const docs = (await resp.json()).response.docs || [];
+    const hit = docs.find(d => norm(d.title) === norm(gem.name) && Math.abs(parseInt(d.year, 10) - gem.year) <= 1);
+    return hit ? 'https://archive.org/details/' + hit.identifier : null;
+  } catch (e) {
+    return null;
+  }
+}
 
 
 // ============ Mode duel ============

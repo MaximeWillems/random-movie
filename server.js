@@ -4,6 +4,7 @@ const express = require('express');
 const cheerio = require('cheerio');
 const cors = require('cors');
 const path = require('path');
+const { parseFilmPage } = require('./lib/film-page');
 
 const app = express();
 const PORT = 3000;
@@ -126,45 +127,9 @@ app.get('/api/seen/:username', async (req, res) => {
 });
 
 // --- Mode duel : popularité d'un film ---
-// La page /film/{slug}/ expose un bloc JSON-LD contenant le nombre de notes
-// (ratingCount), la note moyenne et le poster. Contrairement à /films/popular/
-// ou /{user}/films/, cette page n'est pas bloquée par Cloudflare.
 
 const filmCache = new Map();
 const FILM_TTL = 24 * 60 * 60 * 1000;
-
-function parseFilmPage(html, slug) {
-  const $ = cheerio.load(html);
-
-  const display = $('meta[property="og:title"]').attr('content') || '';
-  const ym = display.match(/\((\d{4})\)\s*$/);
-
-  const film = {
-    slug,
-    name: display.replace(/\s*\(\d{4}\)\s*$/, '').trim(),
-    year: ym ? parseInt(ym[1], 10) : null,
-    rating: null,
-    ratingCount: null,
-    poster: null,
-  };
-
-  const raw = $('script[type="application/ld+json"]').first().html() || '';
-  const json = raw.replace(/\/\*\s*<!\[CDATA\[\s*\*\//, '').replace(/\/\*\s*\]\]>\s*\*\//, '').trim();
-  if (json) {
-    try {
-      const ld = JSON.parse(json);
-      film.poster = ld.image || null;
-      if (ld.aggregateRating) {
-        film.ratingCount = ld.aggregateRating.ratingCount ?? null;
-        film.rating = ld.aggregateRating.ratingValue ?? null;
-      }
-    } catch (e) {
-      // JSON-LD absent ou malformé : on renvoie ce qu'on a
-    }
-  }
-
-  return film;
-}
 
 async function fetchFilmMeta(slug) {
   const hit = filmCache.get(slug);
@@ -173,7 +138,7 @@ async function fetchFilmMeta(slug) {
   const resp = await fetch('https://letterboxd.com/film/' + slug + '/', { headers: HEADERS });
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-  const film = parseFilmPage(await resp.text(), slug);
+  const { film } = parseFilmPage(await resp.text(), slug);
   filmCache.set(slug, { film, ts: Date.now() });
   return film;
 }
@@ -214,6 +179,38 @@ app.get('/api/films', async (req, res) => {
 
   await Promise.all([worker(), worker(), worker()]);
   res.json({ films });
+});
+
+// --- Pépites : l'utilisateur a-t-il déjà vu ce film ? ---
+// La page d'un membre pour un film répond 200 s'il l'a vu (noté, loggé ou
+// marqué comme vu) et 404 sinon, y compris quand le film est seulement dans sa
+// watchlist. Un profil inexistant répond 403.
+
+const seenCache = new Map();
+const SEEN_TTL = 60 * 60 * 1000;
+
+app.get('/api/has-seen/:username/:slug', async (req, res) => {
+  const { username, slug } = req.params;
+  const key = username.toLowerCase() + '|' + slug;
+  const hit = seenCache.get(key);
+  if (hit && Date.now() - hit.ts < SEEN_TTL) return res.json({ seen: hit.seen });
+
+  try {
+    const url = 'https://letterboxd.com/' + encodeURIComponent(username) + '/film/' + encodeURIComponent(slug) + '/';
+    const resp = await fetch(url, { headers: HEADERS });
+    if (resp.status === 403) {
+      return res.status(404).json({ error: 'Profil introuvable, ou accès temporairement bloqué par Letterboxd.' });
+    }
+    if (resp.status !== 200 && resp.status !== 404) {
+      return res.status(502).json({ error: 'HTTP ' + resp.status });
+    }
+
+    const seen = resp.status === 200;
+    seenCache.set(key, { seen, ts: Date.now() });
+    res.json({ seen });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
