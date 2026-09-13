@@ -25,6 +25,11 @@ const { parseFilmPage } = require('../lib/film-page');
 const TARGET = parseInt(process.argv[2], 10) || 200;
 const MAX_RATINGS = 5000;
 const MIN_RATING = 3.0;
+// Letterboxd tire la moyenne des films peu notés vers la moyenne générale : sous
+// 5 000 notes, aucun film trouvé n'atteignait 4/5. Les très bien notés ont donc
+// droit à un plafond plus haut.
+const TOP_RATING = 4.0;
+const TOP_MAX_RATINGS = 20000;
 const MAX_RUNTIME = 240;
 // Un film n'ouvre son entourage que s'il est confidentiel et assez bien noté.
 const OBSCURE = 20000;
@@ -137,12 +142,15 @@ function enqueue(queue, key, p) {
           const { film, people, neighbours } = parseFilmPage(html, slug);
           // Au-delà de 4 h, c'est presque toujours une minisérie que TMDB range
           // parmi les films (The Bible, 480 min).
-          const isGem = film.type === 'movie' && !(film.runtime > MAX_RUNTIME)
-            && film.ratingCount && film.ratingCount < MAX_RATINGS && film.rating >= MIN_RATING;
+          const isGem = film.type === 'movie' && !(film.runtime > MAX_RUNTIME) && film.ratingCount
+            && ((film.ratingCount < MAX_RATINGS && film.rating >= MIN_RATING)
+              || (film.ratingCount < TOP_MAX_RATINGS && film.rating >= TOP_RATING));
 
-          if (!film.ratingCount) rejects.noAverage++;
+          if (isGem) {
+            // compté plus bas
+          } else if (!film.ratingCount) rejects.noAverage++;
           else if (film.ratingCount >= MAX_RATINGS) rejects.tooKnown++;
-          else if (!isGem) rejects.lowRating++;
+          else rejects.lowRating++;
 
           if (isGem) {
             gems.set(slug, film);
