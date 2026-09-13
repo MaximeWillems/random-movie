@@ -181,7 +181,7 @@ app.get('/api/films', async (req, res) => {
   res.json({ films });
 });
 
-// --- Pépites : l'utilisateur a-t-il déjà vu ce film ? ---
+// --- Bons films peu connus : l'utilisateur a-t-il déjà vu ce film ? ---
 // La page d'un membre pour un film répond 200 s'il l'a vu (noté, loggé ou
 // marqué comme vu) et 404 sinon, y compris quand le film est seulement dans sa
 // watchlist. Un profil inexistant répond 403.

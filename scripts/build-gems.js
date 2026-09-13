@@ -2,7 +2,7 @@
 
 /**
  * Construit public/gems.json : des films peu connus mais bien notés, pour le
- * tirage « Pépite » du mode hasard.
+ * tirage « Bons films peu connus » du mode hasard.
  *
  * Aucune page Letterboxd lisible ne liste les films peu vus (/films/ et la
  * recherche sont bloqués par Cloudflare). Le script passe donc par les
@@ -12,7 +12,7 @@
  * chances d'être eux aussi très bien notés que ceux d'un documentaire TV à 3/5.
  *
  * Usage :
- *   node scripts/build-gems.js          # 200 pépites
+ *   node scripts/build-gems.js          # 200 films
  *   node scripts/build-gems.js 400
  *
  * Reprise automatique : l'état du crawl est gardé dans scripts/.gems-state.json.
@@ -93,7 +93,7 @@ function enqueue(queue, key, p) {
   state.personQueue = state.personQueue.map(x => (typeof x === 'string' ? { key: x, p: 0 } : x));
   const visitedFilms = new Set(state.visitedFilms);
   const visitedPeople = new Set(state.visitedPeople);
-  if (visitedFilms.size) console.log(`Reprise : ${gems.size} pépites, ${state.filmQueue.length} films et ${state.personQueue.length} personnes en attente`);
+  if (visitedFilms.size) console.log(`Reprise : ${gems.size} films retenus, ${state.filmQueue.length} films et ${state.personQueue.length} personnes en attente`);
 
   const save = () => {
     const list = [...gems.values()].sort((a, b) => b.rating - a.rating);
@@ -146,11 +146,11 @@ function enqueue(queue, key, p) {
 
           if (isGem) {
             gems.set(slug, film);
-            console.log(`  💎 ${String(gems.size).padStart(4)}/${TARGET}  ${film.name} (${film.year}) — ${film.ratingCount} notes, ${film.rating}/5${film.runtime ? ', ' + film.runtime + ' min' : ''}`);
+            console.log(`  ✔ ${String(gems.size).padStart(4)}/${TARGET}  ${film.name} (${film.year}) — ${film.ratingCount} notes, ${film.rating}/5${film.runtime ? ', ' + film.runtime + ' min' : ''}`);
             save();
           }
 
-          // Les acteurs ne sont suivis que depuis les pépites, sinon la file
+          // Les acteurs ne sont suivis que depuis les films retenus, sinon la file
           // déborde de filmographies grand public.
           if (film.ratingCount && film.ratingCount < OBSCURE && film.rating >= EXPAND_MIN_RATING) {
             for (const p of [...people.directors, ...(isGem ? people.actors.slice(0, 5) : [])]) queuePerson(p, film.rating);
@@ -168,7 +168,7 @@ function enqueue(queue, key, p) {
         if (html) {
           const slugs = [...new Set([...html.matchAll(/data-item-slug="([^"]+)"/g)].map(m => m[1]))];
           // Les filmographies sont triées du plus populaire au moins populaire :
-          // les pépites sont en fin de liste. Elles passent juste après les
+          // les films peu connus sont en fin de liste. Elles passent juste après les
           // voisins directs du film qui a mené à cette personne.
           for (const s of slugs.slice(-FILMS_PER_PERSON)) queueFilm(s, nextPerson.p - 0.1);
         }
@@ -189,12 +189,12 @@ function enqueue(queue, key, p) {
     }
 
     if (fetches && fetches % 25 === 0) {
-      console.log(`    … ${fetches} requêtes, ${evaluated} films testés, ${gems.size} pépites dont ${topCount()} à 4/5 ou plus | sans moyenne ${rejects.noAverage}, trop connus ${rejects.tooKnown}, note < ${MIN_RATING} ${rejects.lowRating}`);
+      console.log(`    … ${fetches} requêtes, ${evaluated} films testés, ${gems.size} films retenus dont ${topCount()} à 4/5 ou plus | sans moyenne ${rejects.noAverage}, trop connus ${rejects.tooKnown}, note < ${MIN_RATING} ${rejects.lowRating}`);
       save();
     }
     await sleep(DELAY);
   }
 
   save();
-  console.log(`\n✅  ${gems.size} pépites dans public/gems.json, dont ${topCount()} à 4/5 ou plus (${fetches} requêtes cette session)`);
+  console.log(`\n✅  ${gems.size} films retenus dans public/gems.json, dont ${topCount()} à 4/5 ou plus (${fetches} requêtes cette session)`);
 })();

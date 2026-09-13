@@ -233,7 +233,7 @@
     flex-shrink: 0;
   }
 
-  /* Pépites */
+  /* Bons films peu connus */
   .gem-stats {
     font-size: 12px;
     color: #f5c518;
@@ -488,7 +488,7 @@
 <section id="viewRandom">
   <div class="duel-source">
     <button class="src-btn -active" id="rndWatchlist" onclick="setRandomSource('watchlist')">Ma watchlist</button>
-    <button class="src-btn" id="rndGems" onclick="setRandomSource('gems')">💎 Pépites inconnues</button>
+    <button class="src-btn" id="rndGems" onclick="setRandomSource('gems')">Bons films peu connus</button>
   </div>
 
   <p class="duel-note" id="gemNote" hidden>Des films de moins de 5 000 notes sur Letterboxd, notés au moins 3/5. Le pseudo est facultatif : il sert à écarter les films que tu as déjà vus.</p>
@@ -626,7 +626,7 @@ function setRandomSource(src) {
   document.getElementById('username').placeholder = isGems
     ? 'Nom d\'utilisateur Letterboxd (facultatif)…'
     : 'Nom d\'utilisateur Letterboxd…';
-  document.getElementById('loadBtn').textContent = isGems ? '💎 Tirer une pépite' : 'Charger';
+  document.getElementById('loadBtn').textContent = isGems ? 'Tirer un bon film' : 'Charger';
   document.getElementById('filmCard').style.display = 'none';
   pickToken++;
   hideError();
@@ -765,7 +765,7 @@ document.getElementById('username').addEventListener('keydown', e => {
 });
 
 
-// ============ Pépites ============
+// ============ Bons films peu connus ============
 // public/gems.json est construit par scripts/build-gems.js : des films de
 // moins de 5 000 notes sur Letterboxd, notés au moins 3/5.
 
@@ -782,12 +782,12 @@ async function pickGem() {
   const user = document.getElementById('username').value.trim();
   hideError();
   setLoading(true);
-  setStatus(user ? 'Recherche d\'une pépite que tu n\'as pas vue…' : 'Recherche d\'une pépite…');
+  setStatus(user ? 'Recherche d\'un bon film que tu n\'as pas vu…' : 'Recherche d\'un bon film…');
 
   try {
     const pool = await loadGems();
     if (!pool.length) {
-      showError('Aucune pépite disponible — lance `node scripts/build-gems.js`.');
+      showError('Aucun film disponible — lance `node scripts/build-gems.js`.');
       return;
     }
 
@@ -822,9 +822,9 @@ async function pickGem() {
         return;
       }
     }
-    showError('Les dernières pépites tirées sont toutes déjà vues. Réessaie.');
+    showError('Les derniers films tirés sont tous déjà vus. Réessaie.');
   } catch (e) {
-    showError('Impossible de charger les pépites.');
+    showError('Impossible de charger la sélection.');
   } finally {
     if (token === pickToken) setLoading(false);
   }
@@ -868,7 +868,7 @@ function showGem(gem, token, warning) {
   }
 
   const stats = document.getElementById('gemStats');
-  const parts = [`💎 ${gem.ratingCount.toLocaleString('fr-FR')} notes`, `★ ${gem.rating.toFixed(1).replace('.', ',')}/5`];
+  const parts = [`${gem.ratingCount.toLocaleString('fr-FR')} notes`, `★ ${gem.rating.toFixed(1).replace('.', ',')}/5`];
   if (gem.runtime && gem.runtime <= 40) parts.push(`court métrage, ${gem.runtime} min`);
   else if (gem.runtime) parts.push(`${gem.runtime} min`);
   stats.textContent = parts.join(' · ');
@@ -880,7 +880,7 @@ function showGem(gem, token, warning) {
   stats.hidden = false;
 
   document.getElementById('countLabel').textContent =
-    `${gems.length} pépite${gems.length > 1 ? 's' : ''} dans la sélection` + (warning ? ` · ${warning}` : '');
+    `${gems.length} film${gems.length > 1 ? 's' : ''} dans la sélection` + (warning ? ` · ${warning}` : '');
 
   renderWatch(gem, token);
   loadGemDetails(gem, token);

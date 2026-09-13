@@ -30,9 +30,9 @@ Puis ouvrir http://localhost:3000
 2. Un film est tiré au hasard avec sa fiche (poster, synopsis, genres) via TMDB
 3. **🎲 Autre film** pour en tirer un nouveau
 
-### Pépites inconnues
+### Bons films peu connus
 
-Dans le mode hasard, l'onglet **💎 Pépites inconnues** tire un film peu connu
+Dans le mode hasard, l'onglet **Bons films peu connus** tire un film peu connu
 mais bien noté : **moins de 5 000 notes sur Letterboxd, au moins 3/5**. Letterboxd
 bloque le nombre de vues, c'est donc le nombre de notes qui sert de mesure.
 Le tirage favorise les mieux notés : un film à 4/5 sort 9 fois plus souvent
