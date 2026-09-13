@@ -799,7 +799,7 @@ async function pickGem() {
         gemHistory.clear();
         available = pool;
       }
-      const gem = available[Math.floor(Math.random() * available.length)];
+      const gem = weightedGem(available);
       gemHistory.add(gem.slug);
 
       if (!user) {
@@ -828,6 +828,18 @@ async function pickGem() {
   } finally {
     if (token === pickToken) setLoading(false);
   }
+}
+
+// Tirage pondéré par la note : un film à 4/5 sort 9 fois plus souvent qu'un
+// film à 3/5 (et 27 fois pour 4,5/5), sans écarter ces derniers.
+function weightedGem(list) {
+  const weights = list.map(g => Math.pow(3, (g.rating - 3) * 2));
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < list.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return list[i];
+  }
+  return list[list.length - 1];
 }
 
 async function hasSeen(user, slug) {

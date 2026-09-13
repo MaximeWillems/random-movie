@@ -6,10 +6,10 @@
  *
  * Aucune page Letterboxd lisible ne liste les films peu vus (/films/ et la
  * recherche sont bloqués par Cloudflare). Le script passe donc par les
- * filmographies et les films similaires : il part des réalisateurs des films
- * les moins populaires du pool de duel, puis chaque film confidentiel croisé
- * ouvre à son tour son équipe et ses voisins, qui ont de bonnes chances d'être
- * aussi peu vus.
+ * filmographies et les films similaires. Il part des réalisateurs des films les
+ * mieux notés du pool de duel, puis explore en priorité l'entourage des films
+ * les mieux notés qu'il croise : les voisins d'un film à 4/5 ont bien plus de
+ * chances d'être eux aussi très bien notés que ceux d'un documentaire TV à 3/5.
  *
  * Usage :
  *   node scripts/build-gems.js          # 200 pépites
@@ -26,9 +26,9 @@ const TARGET = parseInt(process.argv[2], 10) || 200;
 const MAX_RATINGS = 5000;
 const MIN_RATING = 3.0;
 const MAX_RUNTIME = 240;
-// En dessous, un film est assez confidentiel pour que son entourage vaille
-// d'être exploré, même s'il n'est pas lui-même une pépite.
+// Un film n'ouvre son entourage que s'il est confidentiel et assez bien noté.
 const OBSCURE = 20000;
+const EXPAND_MIN_RATING = 3.5;
 const DELAY = 2500;
 const FILMS_PER_PERSON = 30;
 
@@ -60,13 +60,25 @@ async function fetchPage(url) {
   return null;
 }
 
+// File triée par priorité décroissante. La priorité d'un élément est la note du
+// film qui y a mené ; s'il est retrouvé via un film mieux noté, il remonte.
+function enqueue(queue, key, p) {
+  const i = queue.findIndex(x => x.key === key);
+  if (i !== -1) {
+    if (queue[i].p >= p) return;
+    queue.splice(i, 1);
+  }
+  const at = queue.findIndex(x => x.p < p);
+  queue.splice(at === -1 ? queue.length : at, 0, { key, p });
+}
+
 (async () => {
   // Les films du pool de duel sont connus par construction : inutile de les
-  // tester. Les moins populaires servent de départ, leurs réalisateurs étant
-  // les plus confidentiels.
+  // tester. Les mieux notés servent de départ, leurs réalisateurs ayant plus de
+  // chances d'avoir des courts ou des premiers films eux aussi très bien notés.
   const popular = JSON.parse(fs.readFileSync(POOL, 'utf8'));
   const known = new Set(popular.map(f => f.slug));
-  const seeds = [...popular].sort((a, b) => a.ratingCount - b.ratingCount);
+  const seeds = [...popular].sort((a, b) => b.rating - a.rating);
 
   const gems = new Map();
   if (fs.existsSync(OUT)) {
@@ -76,6 +88,9 @@ async function fetchPage(url) {
   const state = fs.existsSync(STATE)
     ? JSON.parse(fs.readFileSync(STATE, 'utf8'))
     : { filmQueue: [], personQueue: [], seedIndex: 0, visitedFilms: [], visitedPeople: [] };
+  // Ancien format : files de chaînes, sans priorité.
+  state.filmQueue = state.filmQueue.map(x => (typeof x === 'string' ? { key: x, p: 0 } : x));
+  state.personQueue = state.personQueue.map(x => (typeof x === 'string' ? { key: x, p: 0 } : x));
   const visitedFilms = new Set(state.visitedFilms);
   const visitedPeople = new Set(state.visitedPeople);
   if (visitedFilms.size) console.log(`Reprise : ${gems.size} pépites, ${state.filmQueue.length} films et ${state.personQueue.length} personnes en attente`);
@@ -92,23 +107,26 @@ async function fetchPage(url) {
     }));
   };
 
-  const queueFilm = slug => {
-    if (!visitedFilms.has(slug) && !known.has(slug) && !state.filmQueue.includes(slug)) state.filmQueue.push(slug);
+  const queueFilm = (slug, p) => {
+    if (!visitedFilms.has(slug) && !known.has(slug)) enqueue(state.filmQueue, slug, p);
   };
-  const queuePerson = (p, first) => {
-    if (visitedPeople.has(p) || state.personQueue.includes(p)) return;
-    if (first) state.personQueue.unshift(p);
-    else state.personQueue.push(p);
+  const queuePerson = (person, p) => {
+    if (!visitedPeople.has(person)) enqueue(state.personQueue, person, p);
   };
 
   let fetches = 0;
   let evaluated = 0;
   const rejects = { noAverage: 0, tooKnown: 0, lowRating: 0 };
+  const topCount = () => [...gems.values()].filter(g => g.rating >= 4).length;
 
   while (gems.size < TARGET) {
     try {
-      if (state.filmQueue.length) {
-        const slug = state.filmQueue.shift();
+      const nextFilm = state.filmQueue[0];
+      const nextPerson = state.personQueue[0];
+
+      if (nextFilm && (!nextPerson || nextFilm.p >= nextPerson.p)) {
+        state.filmQueue.shift();
+        const slug = nextFilm.key;
         if (visitedFilms.has(slug)) continue;
         visitedFilms.add(slug);
 
@@ -132,17 +150,16 @@ async function fetchPage(url) {
             save();
           }
 
-          // Un film confidentiel, pépite ou non, mène vers d'autres films
-          // confidentiels : son entourage passe devant les réalisateurs de films
-          // connus. Les acteurs ne sont suivis que depuis les pépites, sinon la
-          // file déborde de filmographies grand public.
-          if (!film.ratingCount || film.ratingCount < OBSCURE) {
-            for (const p of [...people.directors, ...(isGem ? people.actors.slice(0, 5) : [])]) queuePerson(p, true);
-            for (const n of neighbours) queueFilm(n);
+          // Les acteurs ne sont suivis que depuis les pépites, sinon la file
+          // déborde de filmographies grand public.
+          if (film.ratingCount && film.ratingCount < OBSCURE && film.rating >= EXPAND_MIN_RATING) {
+            for (const p of [...people.directors, ...(isGem ? people.actors.slice(0, 5) : [])]) queuePerson(p, film.rating);
+            for (const n of neighbours) queueFilm(n, film.rating);
           }
         }
-      } else if (state.personQueue.length) {
-        const person = state.personQueue.shift();
+      } else if (nextPerson) {
+        state.personQueue.shift();
+        const person = nextPerson.key;
         if (visitedPeople.has(person)) continue;
         visitedPeople.add(person);
 
@@ -151,8 +168,9 @@ async function fetchPage(url) {
         if (html) {
           const slugs = [...new Set([...html.matchAll(/data-item-slug="([^"]+)"/g)].map(m => m[1]))];
           // Les filmographies sont triées du plus populaire au moins populaire :
-          // les pépites sont en fin de liste.
-          for (const s of slugs.slice(-FILMS_PER_PERSON)) queueFilm(s);
+          // les pépites sont en fin de liste. Elles passent juste après les
+          // voisins directs du film qui a mené à cette personne.
+          for (const s of slugs.slice(-FILMS_PER_PERSON)) queueFilm(s, nextPerson.p - 0.1);
         }
       } else if (state.seedIndex < seeds.length) {
         // Film du pool de duel : il ne sert qu'à découvrir son réalisateur.
@@ -160,7 +178,7 @@ async function fetchPage(url) {
         const html = await fetchPage('https://letterboxd.com/film/' + seed.slug + '/');
         fetches++;
         if (html) {
-          for (const p of parseFilmPage(html, seed.slug).people.directors) queuePerson(p, false);
+          for (const p of parseFilmPage(html, seed.slug).people.directors) queuePerson(p, 0);
         }
       } else {
         console.log('Plus rien à explorer.');
@@ -171,12 +189,12 @@ async function fetchPage(url) {
     }
 
     if (fetches && fetches % 25 === 0) {
-      console.log(`    … ${fetches} requêtes, ${evaluated} films testés, ${gems.size} pépites | sans moyenne ${rejects.noAverage}, trop connus ${rejects.tooKnown}, note < ${MIN_RATING} ${rejects.lowRating}`);
+      console.log(`    … ${fetches} requêtes, ${evaluated} films testés, ${gems.size} pépites dont ${topCount()} à 4/5 ou plus | sans moyenne ${rejects.noAverage}, trop connus ${rejects.tooKnown}, note < ${MIN_RATING} ${rejects.lowRating}`);
       save();
     }
     await sleep(DELAY);
   }
 
   save();
-  console.log(`\n✅  ${gems.size} pépites dans public/gems.json (${fetches} requêtes cette session)`);
+  console.log(`\n✅  ${gems.size} pépites dans public/gems.json, dont ${topCount()} à 4/5 ou plus (${fetches} requêtes cette session)`);
 })();

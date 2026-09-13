@@ -35,6 +35,8 @@ Puis ouvrir http://localhost:3000
 Dans le mode hasard, l'onglet **💎 Pépites inconnues** tire un film peu connu
 mais bien noté : **moins de 5 000 notes sur Letterboxd, au moins 3/5**. Letterboxd
 bloque le nombre de vues, c'est donc le nombre de notes qui sert de mesure.
+Le tirage favorise les mieux notés : un film à 4/5 sort 9 fois plus souvent
+qu'un film à 3/5, un film à 4,5/5 27 fois plus.
 
 - **Pseudo facultatif** : s'il est renseigné, les films déjà vus sont écartés.
   La vérification se fait film par film via `/{user}/film/{slug}/`, qui répond
@@ -53,7 +55,8 @@ node scripts/build-gems.js 200
 
 Aucune page Letterboxd lisible ne liste les films peu vus, le script passe donc
 par les filmographies (`/director/…`, `/actor/…`, accessibles) et les films
-similaires, en partant des réalisateurs les moins populaires du pool de duel.
+similaires. Il part des réalisateurs des films les mieux notés du pool de duel,
+puis explore en priorité l'entourage des films les mieux notés qu'il croise.
 Il reprend là où il s'était arrêté (état dans `scripts/.gems-state.json`, non
 versionné).
 
