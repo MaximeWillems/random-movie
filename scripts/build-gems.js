@@ -1,45 +1,33 @@
 'use strict';
 
 /**
- * Construit public/gems.json : des films peu connus mais bien notés, pour le
- * tirage « Bons films peu connus » du mode hasard.
+ * Construit public/gems.json : les films peu connus mais bien notés du mode
+ * hasard, à partir des listes Letterboxd de scripts/gem-lists.txt.
  *
- * Aucune page Letterboxd lisible ne liste les films peu vus (/films/ et la
- * recherche sont bloqués par Cloudflare). Le script passe donc par les
- * filmographies et les films similaires. Il part des réalisateurs des films les
- * mieux notés du pool de duel, puis explore en priorité l'entourage des films
- * les mieux notés qu'il croise : les voisins d'un film à 4/5 ont bien plus de
- * chances d'être eux aussi très bien notés que ceux d'un documentaire TV à 3/5.
+ * Pour chaque liste pas encore lue, le script prend ses 100 films les mieux
+ * notés et garde ceux qui passent les critères de lib/gem-rules.js. Seule la
+ * première page du tri par note est lisible, et c'est là que se trouvent les
+ * films à 4/5 : inutile d'aller plus loin dans la liste.
  *
  * Usage :
- *   node scripts/build-gems.js          # 200 films
- *   node scripts/build-gems.js 400
+ *   node scripts/find-lists.js     # optionnel : ajoute des listes de niche
+ *   node scripts/build-gems.js
  *
- * Reprise automatique : l'état du crawl est gardé dans scripts/.gems-state.json.
+ * Les listes lues et les films déjà testés sont gardés dans
+ * scripts/.gems-state.json : relancer ne traite que les nouvelles listes.
  */
 
 const fs = require('fs');
 const path = require('path');
 const { parseFilmPage } = require('../lib/film-page');
+const { isGem } = require('../lib/gem-rules');
 
-const TARGET = parseInt(process.argv[2], 10) || 200;
-const MAX_RATINGS = 5000;
-const MIN_RATING = 3.0;
-// Letterboxd tire la moyenne des films peu notés vers la moyenne générale : sous
-// 5 000 notes, aucun film trouvé n'atteignait 4/5. Les très bien notés ont donc
-// droit à un plafond plus haut.
-const TOP_RATING = 4.0;
-const TOP_MAX_RATINGS = 20000;
-const MAX_RUNTIME = 240;
-// Un film n'ouvre son entourage que s'il est confidentiel et assez bien noté.
-const OBSCURE = 20000;
-const EXPAND_MIN_RATING = 3.5;
 const DELAY = 2500;
-const FILMS_PER_PERSON = 30;
 
 const OUT = path.join(__dirname, '..', 'public', 'gems.json');
 const POOL = path.join(__dirname, '..', 'public', 'films.json');
 const STATE = path.join(__dirname, '.gems-state.json');
+const LISTS = path.join(__dirname, 'gem-lists.txt');
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -51,158 +39,91 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function fetchPage(url) {
   for (let attempt = 1; attempt <= 3; attempt++) {
-    const resp = await fetch(url, { headers: HEADERS });
-    if (resp.status === 404) return null;
-    if (resp.status === 403 || resp.status === 429) {
-      const wait = 30000 * attempt;
-      console.log(`    ${resp.status} sur ${url} — pause ${wait / 1000}s`);
-      await sleep(wait);
+    await sleep(DELAY);
+    let resp;
+    try {
+      resp = await fetch(url, { headers: HEADERS });
+    } catch (e) {
+      // Coupure réseau (ECONNRESET) : on retente plutôt que de perdre le film.
+      console.log(`    réseau (${e.cause ? e.cause.code : e.message}) sur ${url} — nouvel essai`);
+      await sleep(10000 * attempt);
       continue;
     }
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    return resp.text();
+    if (resp.status === 404) return null;
+    if (resp.status === 403 || resp.status === 429) {
+      console.log(`    ${resp.status} sur ${url} — pause ${30 * attempt}s`);
+      await sleep(30000 * attempt);
+      continue;
+    }
+    return resp.ok ? resp.text() : null;
   }
   return null;
 }
 
-// File triée par priorité décroissante. La priorité d'un élément est la note du
-// film qui y a mené ; s'il est retrouvé via un film mieux noté, il remonte.
-function enqueue(queue, key, p) {
-  const i = queue.findIndex(x => x.key === key);
-  if (i !== -1) {
-    if (queue[i].p >= p) return;
-    queue.splice(i, 1);
-  }
-  const at = queue.findIndex(x => x.p < p);
-  queue.splice(at === -1 ? queue.length : at, 0, { key, p });
-}
-
 (async () => {
-  // Les films du pool de duel sont connus par construction : inutile de les
-  // tester. Les mieux notés servent de départ, leurs réalisateurs ayant plus de
-  // chances d'avoir des courts ou des premiers films eux aussi très bien notés.
-  const popular = JSON.parse(fs.readFileSync(POOL, 'utf8'));
-  const known = new Set(popular.map(f => f.slug));
-  const seeds = [...popular].sort((a, b) => b.rating - a.rating);
+  // Les films du pool de duel sont connus par construction : inutile de les tester.
+  const known = new Set(JSON.parse(fs.readFileSync(POOL, 'utf8')).map(f => f.slug));
 
   const gems = new Map();
   if (fs.existsSync(OUT)) {
     for (const g of JSON.parse(fs.readFileSync(OUT, 'utf8'))) gems.set(g.slug, g);
   }
 
-  const state = fs.existsSync(STATE)
-    ? JSON.parse(fs.readFileSync(STATE, 'utf8'))
-    : { filmQueue: [], personQueue: [], seedIndex: 0, visitedFilms: [], visitedPeople: [] };
-  // Ancien format : files de chaînes, sans priorité.
-  state.filmQueue = state.filmQueue.map(x => (typeof x === 'string' ? { key: x, p: 0 } : x));
-  state.personQueue = state.personQueue.map(x => (typeof x === 'string' ? { key: x, p: 0 } : x));
-  const visitedFilms = new Set(state.visitedFilms);
-  const visitedPeople = new Set(state.visitedPeople);
-  if (visitedFilms.size) console.log(`Reprise : ${gems.size} films retenus, ${state.filmQueue.length} films et ${state.personQueue.length} personnes en attente`);
+  const state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : {};
+  const visited = new Set(state.visitedFilms || []);
+  const listsDone = state.listsDone || [];
 
   const save = () => {
-    const list = [...gems.values()].sort((a, b) => b.rating - a.rating);
-    fs.writeFileSync(OUT, JSON.stringify(list));
-    fs.writeFileSync(STATE, JSON.stringify({
-      filmQueue: state.filmQueue.slice(0, 20000),
-      personQueue: state.personQueue.slice(0, 5000),
-      seedIndex: state.seedIndex,
-      visitedFilms: [...visitedFilms],
-      visitedPeople: [...visitedPeople],
-    }));
+    fs.writeFileSync(OUT, JSON.stringify([...gems.values()].sort((a, b) => b.rating - a.rating)));
+    fs.writeFileSync(STATE, JSON.stringify({ visitedFilms: [...visited], listsDone }));
   };
 
-  const queueFilm = (slug, p) => {
-    if (!visitedFilms.has(slug) && !known.has(slug)) enqueue(state.filmQueue, slug, p);
-  };
-  const queuePerson = (person, p) => {
-    if (!visitedPeople.has(person)) enqueue(state.personQueue, person, p);
-  };
+  const lists = fs.existsSync(LISTS)
+    ? fs.readFileSync(LISTS, 'utf8').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'))
+    : [];
 
-  let fetches = 0;
-  let evaluated = 0;
-  const rejects = { noAverage: 0, tooKnown: 0, lowRating: 0 };
-  const topCount = () => [...gems.values()].filter(g => g.rating >= 4).length;
+  const before = gems.size;
+  let tested = 0;
 
-  while (gems.size < TARGET) {
-    try {
-      const nextFilm = state.filmQueue[0];
-      const nextPerson = state.personQueue[0];
+  for (const raw of lists) {
+    const m = (raw + '/').match(/letterboxd\.com(\/[^\/\s]+\/list\/[^\/\s]+)\//);
+    if (!m) {
+      console.log('Adresse de liste non reconnue :', raw);
+      continue;
+    }
+    const listPath = m[1] + '/';
+    if (listsDone.includes(listPath)) continue;
 
-      if (nextFilm && (!nextPerson || nextFilm.p >= nextPerson.p)) {
-        state.filmQueue.shift();
-        const slug = nextFilm.key;
-        if (visitedFilms.has(slug)) continue;
-        visitedFilms.add(slug);
+    const html = await fetchPage('https://letterboxd.com' + listPath + 'by/rating/');
+    if (!html) {
+      console.log('Liste illisible pour l\'instant :', listPath);
+      continue;
+    }
+    const slugs = [...new Set([...html.matchAll(/data-item-slug="([^"]+)"/g)].map(x => x[1]))];
+    console.log(`\n${listPath} : ${slugs.length} films les mieux notés`);
 
-        const html = await fetchPage('https://letterboxd.com/film/' + slug + '/');
-        fetches++;
-        evaluated++;
-        if (html) {
-          const { film, people, neighbours } = parseFilmPage(html, slug);
-          // Au-delà de 4 h, c'est presque toujours une minisérie que TMDB range
-          // parmi les films (The Bible, 480 min).
-          const isGem = film.type === 'movie' && !(film.runtime > MAX_RUNTIME) && film.ratingCount
-            && ((film.ratingCount < MAX_RATINGS && film.rating >= MIN_RATING)
-              || (film.ratingCount < TOP_MAX_RATINGS && film.rating >= TOP_RATING));
+    let kept = 0;
+    for (const slug of slugs) {
+      if (visited.has(slug) || known.has(slug)) continue;
+      const page = await fetchPage('https://letterboxd.com/film/' + slug + '/');
+      visited.add(slug);
+      tested++;
+      if (!page) continue;
 
-          if (isGem) {
-            // compté plus bas
-          } else if (!film.ratingCount) rejects.noAverage++;
-          else if (film.ratingCount >= MAX_RATINGS) rejects.tooKnown++;
-          else rejects.lowRating++;
-
-          if (isGem) {
-            gems.set(slug, film);
-            console.log(`  ✔ ${String(gems.size).padStart(4)}/${TARGET}  ${film.name} (${film.year}) — ${film.ratingCount} notes, ${film.rating}/5${film.runtime ? ', ' + film.runtime + ' min' : ''}`);
-            save();
-          }
-
-          // Les acteurs ne sont suivis que depuis les films retenus, sinon la file
-          // déborde de filmographies grand public.
-          if (film.ratingCount && film.ratingCount < OBSCURE && film.rating >= EXPAND_MIN_RATING) {
-            for (const p of [...people.directors, ...(isGem ? people.actors.slice(0, 5) : [])]) queuePerson(p, film.rating);
-            for (const n of neighbours) queueFilm(n, film.rating);
-          }
-        }
-      } else if (nextPerson) {
-        state.personQueue.shift();
-        const person = nextPerson.key;
-        if (visitedPeople.has(person)) continue;
-        visitedPeople.add(person);
-
-        const html = await fetchPage('https://letterboxd.com' + person);
-        fetches++;
-        if (html) {
-          const slugs = [...new Set([...html.matchAll(/data-item-slug="([^"]+)"/g)].map(m => m[1]))];
-          // Les filmographies sont triées du plus populaire au moins populaire :
-          // les films peu connus sont en fin de liste. Elles passent juste après les
-          // voisins directs du film qui a mené à cette personne.
-          for (const s of slugs.slice(-FILMS_PER_PERSON)) queueFilm(s, nextPerson.p - 0.1);
-        }
-      } else if (state.seedIndex < seeds.length) {
-        // Film du pool de duel : il ne sert qu'à découvrir son réalisateur.
-        const seed = seeds[state.seedIndex++];
-        const html = await fetchPage('https://letterboxd.com/film/' + seed.slug + '/');
-        fetches++;
-        if (html) {
-          for (const p of parseFilmPage(html, seed.slug).people.directors) queuePerson(p, 0);
-        }
-      } else {
-        console.log('Plus rien à explorer.');
-        break;
+      const { film } = parseFilmPage(page, slug);
+      if (isGem(film)) {
+        gems.set(slug, film);
+        kept++;
+        console.log(`  ✔ ${film.name} (${film.year}) — ${film.ratingCount} notes, ${film.rating}/5`);
       }
-    } catch (e) {
-      console.log('  ✗', e.message);
     }
 
-    if (fetches && fetches % 25 === 0) {
-      console.log(`    … ${fetches} requêtes, ${evaluated} films testés, ${gems.size} films retenus dont ${topCount()} à 4/5 ou plus | sans moyenne ${rejects.noAverage}, trop connus ${rejects.tooKnown}, note < ${MIN_RATING} ${rejects.lowRating}`);
-      save();
-    }
-    await sleep(DELAY);
+    listsDone.push(listPath);
+    save();
+    console.log(`  → ${kept} film(s) retenu(s)`);
   }
 
   save();
-  console.log(`\n✅  ${gems.size} films retenus dans public/gems.json, dont ${topCount()} à 4/5 ou plus (${fetches} requêtes cette session)`);
+  const top = [...gems.values()].filter(g => g.rating >= 4).length;
+  console.log(`\n✅  ${gems.size} films dans public/gems.json (+${gems.size - before}), dont ${top} à 4/5 ou plus — ${tested} films testés`);
 })();

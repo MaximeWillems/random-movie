@@ -1,0 +1,63 @@
+# Listes Letterboxd lues par scripts/build-gems.js, une adresse par ligne.
+# Le script prend les 100 films les mieux notés de chaque liste (seule la
+# première page du tri par note est lisible) et garde ceux qui passent les
+# critères : moins de 5 000 notes et 3/5, ou moins de 20 000 notes et 4/5.
+# Une liste déjà lue n'est pas relue : pour en ajouter une, colle son adresse
+# et relance le script.
+
+# Films passés par le top 250 officiel des réalisatrices
+https://letterboxd.com/samb128/list/films-that-have-been-in-official-top-250/
+
+# Hidden Gems: Highest Rated With Less Than 25K Ratings — 6309 films, ~90 bons films estimés
+https://letterboxd.com/mattheuswc/list/hidden-gems-highest-rated-with-less-than/
+
+# Top 100 Underseen Films — 100 films, ~90 bons films estimés
+https://letterboxd.com/official/list/top-100-underseen-films/
+
+# Stuff by women, about women — 6019 films, ~40 bons films estimés
+https://letterboxd.com/meagan/list/stuff-by-women-about-women/
+
+# Films Directed by Women — 8706 films, ~30 bons films estimés
+https://letterboxd.com/michaelhaneke/list/films-directed-by-women/
+
+# Interesting ones which deserve more recognition (some slightly well-known, others almost unobserved). ***When added (that is, update needed) — 2667 films, ~30 bons films estimés
+https://letterboxd.com/nikolis/list/interesting-ones-which-deserve-more-recognition/
+
+# Movies Where There Are No Men — 115 films, ~30 bons films estimés
+https://letterboxd.com/clairacurtis/list/movies-where-there-are-no-men/
+
+# "Cartoons are for Children" — 487 films, ~30 bons films estimés
+https://letterboxd.com/lucidforest/list/cartoons-are-for-children/
+
+# Top 250 Films by Women Directors — 250 films, ~20 bons films estimés
+https://letterboxd.com/official/list/top-250-films-by-women-directors/
+
+# 🌈Pride: A Chronological History of Queer Interest & LGBTQ+ Cinema — 20215 films, ~20 bons films estimés
+https://letterboxd.com/mundof/list/pride-a-chronological-history-of-queer-interest/
+
+# Things That Piqued My Interest & Tickled My Fancy — 36485 films, ~20 bons films estimés
+https://letterboxd.com/brokenclaw/list/things-that-piqued-my-interest-tickled-my/
+
+# "nothing happens" yeah but the vibes — 300 films, ~20 bons films estimés
+https://letterboxd.com/funeralroses/list/nothing-happens-yeah-but-the-vibes/
+
+# The Most Comprehensive List of Japanese Movies Ever...Maybe — 59154 films, ~20 bons films estimés
+https://letterboxd.com/mishima24/list/the-most-comprehensive-list-of-japanese-movies/
+
+# A Comprehensive Animation List — 77980 films, ~19 bons films estimés
+https://letterboxd.com/ryokohakubi/list/a-comprehensive-animation-list/
+
+# Written by Women — 28976 films, ~10 bons films estimés
+https://letterboxd.com/aobh/list/written-by-women/
+
+# Solidarity Cinema Archive — 10723 films, ~10 bons films estimés
+https://letterboxd.com/solidaritycine/list/solidarity-cinema-archive/
+
+# The Great Unknown — 1551 films, ~10 bons films estimés
+https://letterboxd.com/gabrielgarfo/list/the-great-unknown/
+
+# Asian Cinema — 2890 films, ~10 bons films estimés
+https://letterboxd.com/agassionfire/list/asian-cinema-1/
+
+# asian coming of age films — 188 films, ~10 bons films estimés
+https://letterboxd.com/ofilmaria/list/asian-coming-of-age-films/

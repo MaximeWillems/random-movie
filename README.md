@@ -51,18 +51,34 @@ qu'un film à 3/5, un film à 4,5/5 27 fois plus.
   (même titre, même année, licence déclarée), et recherche YouTube / Vimeo,
   où les réalisateurs publient souvent eux-mêmes leurs courts métrages
 
-La sélection vient de `public/gems.json`, construit à l'avance :
+La sélection vient de `public/gems.json`, construit à l'avance à partir de
+**listes Letterboxd de niche** (réalisatrices, un pays, un genre…) : leurs films
+les mieux notés sont souvent excellents et peu vus.
 
 ```bash
-node scripts/build-gems.js 200
+node scripts/find-lists.js
+node scripts/build-gems.js
 ```
 
-Aucune page Letterboxd lisible ne liste les films peu vus, le script passe donc
-par les filmographies (`/director/…`, `/actor/…`, accessibles) et les films
-similaires. Il part des réalisateurs des films les mieux notés du pool de duel,
-puis explore en priorité l'entourage des films les mieux notés qu'il croise.
-Il reprend là où il s'était arrêté (état dans `scripts/.gems-state.json`, non
-versionné).
+1. `find-lists.js` repère des listes candidates et note chaque liste d'au moins
+   100 films sur 10 films répartis dans ses 100 mieux notés. Les plus
+   prometteuses sont ajoutées à `scripts/gem-lists.txt`
+2. `build-gems.js` lit les 100 films les mieux notés de chaque nouvelle liste de
+   `scripts/gem-lists.txt` et garde ceux qui passent les critères
+
+On peut aussi coller à la main l'adresse d'une liste dans `scripts/gem-lists.txt`.
+
+La recherche de listes est bloquée par Letterboxd : les candidates viennent des
+listes officielles et des listes qui contiennent nos meilleurs films. Seule la
+première page du tri par note est lisible, soit 100 films par liste, ce qui
+suffit puisque les films à 4/5 sont en haut. Sur la liste des réalisatrices, ces
+100 films en ont donné 23, dont 22 à 4/5 ou plus. L'ancienne exploration de
+proche en proche (filmographies, films similaires) n'en avait trouvé aucun à 4/5
+en plusieurs centaines de films : elle a été retirée.
+
+Les listes lues et les films déjà testés sont gardés dans
+`scripts/.gems-state.json` (non versionné) : relancer ne traite que les nouvelles
+listes.
 
 ### Mode duel
 
