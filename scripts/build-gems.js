@@ -20,7 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseFilmPage } = require('../lib/film-page');
-const { isGem } = require('../lib/gem-rules');
+const { isGem, isRecent } = require('../lib/gem-rules');
 
 const DELAY = 2500;
 
@@ -64,10 +64,17 @@ async function fetchPage(url) {
   // Les films du pool de duel sont connus par construction : inutile de les tester.
   const known = new Set(JSON.parse(fs.readFileSync(POOL, 'utf8')).map(f => f.slug));
 
+  // La limite des films récents avance chaque année : ceux déjà retenus qui
+  // sont devenus trop récents pour la règle sont retirés à chaque passage.
   const gems = new Map();
+  let dropped = 0;
   if (fs.existsSync(OUT)) {
-    for (const g of JSON.parse(fs.readFileSync(OUT, 'utf8'))) gems.set(g.slug, g);
+    for (const g of JSON.parse(fs.readFileSync(OUT, 'utf8'))) {
+      if (isRecent(g)) dropped++;
+      else gems.set(g.slug, g);
+    }
   }
+  if (dropped) console.log(`${dropped} film(s) trop récent(s) retiré(s)`);
 
   const state = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : {};
   const visited = new Set(state.visitedFilms || []);

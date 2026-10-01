@@ -34,7 +34,8 @@ Puis ouvrir http://localhost:3000
 
 Dans le mode hasard, l'onglet **Bons films peu connus** tire un film peu connu
 mais bien noté : **moins de 5 000 notes sur Letterboxd et au moins 3/5, ou moins
-de 20 000 notes pour les films à 4/5 et plus**. Letterboxd bloque le nombre de
+de 20 000 notes pour les films à 4/5 et plus**, sortis il y a plus de deux ans (un film récent
+a peu de notes parce qu'il est récent, pas parce qu'il est méconnu). Letterboxd bloque le nombre de
 vues, c'est donc le nombre de notes qui sert de mesure. Le plafond est plus haut
 pour les films à 4/5 parce que Letterboxd tire la moyenne des films peu notés
 vers la moyenne générale : sous 5 000 notes, aucun des 81 premiers films trouvés
