@@ -260,18 +260,17 @@
   }
   .film-head.light, .side.light { color: var(--night); }
   .film-text { min-width: 0; padding: 22px 30px 26px; }
-  .film-photo, .side-photo { position: relative; min-height: 375px; }
+  .film-photo { position: relative; min-height: 375px; }
   .film-photo img, .side-photo img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: grayscale(1) contrast(1.12);
-    mix-blend-mode: multiply;
     transition: filter 0.25s, opacity 0.2s;
   }
-  .film-photo:hover img, .side:hover .side-photo img { filter: none; mix-blend-mode: normal; }
+  .film-photo img { filter: grayscale(1) contrast(1.12); mix-blend-mode: multiply; }
+  .film-photo:hover img { filter: none; mix-blend-mode: normal; }
   .stamp {
     display: inline-block;
     padding: 4px 10px 3px;
@@ -353,12 +352,12 @@
   .duel-q p { font-size: 15px; color: var(--ink-2); }
 
   .arena { position: relative; display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); }
-  /* Chaque moitié : le texte au centre, l'affiche sur le bord extérieur, en miroir */
+  /* Chaque moitié est un ticket : l'affiche au naturel en haut, puis le talon
+     de couleur avec le texte */
   .side {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 170px;
-    min-height: 300px;
+    display: flex;
+    flex-direction: column;
     padding: 0;
     background: var(--c);
     color: var(--cream);
@@ -368,12 +367,19 @@
     cursor: pointer;
     transition: background 0.2s, color 0.2s, box-shadow 0.12s;
   }
-  .side:first-child { grid-template-columns: 170px minmax(0, 1fr); }
-  .side:first-child .side-photo { order: -1; }
   .side:last-child { border-left: 2px solid var(--ink); }
   .side:hover { box-shadow: inset 0 0 0 5px var(--ink); }
-  .side-text { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 24px 22px 22px; }
-  .side-photo { min-height: 0; }
+  .side-photo { position: relative; height: 230px; background: var(--paper-2); }
+  .side-photo img { object-position: 50% 25%; }
+  .side-text {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 210px;
+    padding: 22px 22px 20px;
+  }
   .side-title {
     display: block;
     font-size: clamp(28px, 4.6vw, 56px);
@@ -396,7 +402,7 @@
   .arena.revealed .side.win .stamp-win { visibility: visible; }
   .arena.revealed .side.picked .stamp-pick { visibility: visible; }
   .arena.revealed .side.lose { background: var(--paper-2); color: var(--ink-3); }
-  .arena.revealed .side.lose .side-photo img { filter: grayscale(1); mix-blend-mode: multiply; opacity: 0.4; }
+  .arena.revealed .side.lose .side-photo img { filter: grayscale(1); opacity: 0.5; }
   .arena.revealed .side.wrong .stamp-pick { color: var(--vermillon); }
 
   /* Posé sur le bord haut de l'arène, pour ne jamais recouvrir un titre */
@@ -438,10 +444,8 @@
     .film-title { font-size: clamp(36px, 11vw, 56px); }
     .member { align-items: flex-start; }
 
-    /* Moitiés trop étroites pour deux colonnes : l'affiche passe en bandeau au-dessus */
-    .side, .side:first-child { grid-template-columns: 1fr; grid-template-rows: 150px auto; min-height: 0; }
-    .side .side-photo { order: -1; }
-    .side-text { padding: 22px 12px 14px; min-height: 190px; }
+    .side-photo { height: 150px; }
+    .side-text { padding: 18px 12px 14px; min-height: 190px; }
     .side .stamp { right: 8px; bottom: 12px; font-size: 11px; padding: 3px 7px 2px; }
     .side .stamp-pick { bottom: 46px; }
     .side-result .n { font-size: 24px; }
@@ -1491,8 +1495,8 @@ function side(film, i, ink) {
   );
 
   const photo = el('span', 'side-photo');
-  if (film.poster) photo.append(posterImg(posterUrl(film.poster, '0-230-0-345'), null, film.name));
-  b.append(text, photo);
+  if (film.poster) photo.append(posterImg(posterUrl(film.poster, '0-500-0-750'), null, film.name));
+  b.append(photo, text);
 
   b.addEventListener('click', () => vote(i));
   return b;
