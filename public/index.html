@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le Cercle des films disparus</title>
+<script>
+  // Thème choisi à la main, appliqué avant l'affichage pour éviter un flash
+  try {
+    const theme = localStorage.getItem('lb-theme');
+    if (theme) document.documentElement.dataset.theme = theme;
+  } catch (e) {
+    // stockage refusé : on suit le thème du système
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
@@ -19,6 +28,10 @@
     --ink-3: #9b958f;
     --rule: #cbc3b3;
 
+    /* Texte posé sur un aplat d'encre : clair sur les encres foncées, foncé sur les claires */
+    --cream: #f6f0e4;
+    --night: #1a1820;
+
     /* Encres d'imprimerie, en aplat */
     --vermillon: #ec4f2c;
     --rose: #f07fb0;
@@ -31,11 +44,47 @@
     --red: var(--vermillon);
     --sec: var(--vermillon);
     --font: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    color-scheme: light;
+  }
+
+  /* Mode sombre : papier noir, encres un peu éclaircies pour rester lisibles */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17151b;
+      --paper-2: #25222b;
+      --ink: #efe8da;
+      --ink-2: #aaa39b;
+      --ink-3: #6d6870;
+      --rule: #38343f;
+      --vermillon: #f0603c;
+      --rose: #f28bb8;
+      --jaune: #f2c94c;
+      --vert: #2ea672;
+      --sarcelle: #1b98a3;
+      --bleu: #4f73d6;
+      --prune: #8d5fa8;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #17151b;
+    --paper-2: #25222b;
+    --ink: #efe8da;
+    --ink-2: #aaa39b;
+    --ink-3: #6d6870;
+    --rule: #38343f;
+    --vermillon: #f0603c;
+    --rose: #f28bb8;
+    --jaune: #f2c94c;
+    --vert: #2ea672;
+    --sarcelle: #1b98a3;
+    --bleu: #4f73d6;
+    --prune: #8d5fa8;
+    color-scheme: dark;
   }
 
   /* Chaque onglet a son encre, reprise par les boutons et les choix actifs */
-  body[data-tab="hasard"] { --sec: var(--vermillon); }
-  body[data-tab="gems"] { --sec: var(--vert); }
+  body[data-tab="find"] { --sec: var(--vermillon); }
   body[data-tab="duel"] { --sec: var(--bleu); }
 
   body {
@@ -44,7 +93,7 @@
     font: 400 16px/1.5 var(--font);
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: var(--sec); color: var(--paper); }
+  ::selection { background: var(--sec); color: var(--cream); }
   button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
   .app { max-width: 1080px; margin: 0 auto; padding: 0 32px 40px; }
@@ -53,13 +102,14 @@
   .narrow { font-stretch: 62%; font-weight: 900; text-transform: uppercase; }
 
   /* ---------- Bandeau ---------- */
+  .topbar { display: flex; justify-content: flex-end; padding-top: 14px; font-size: 13px; color: var(--ink-2); }
   .mast {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     gap: 24px;
     flex-wrap: wrap;
-    padding: 30px 0 14px;
+    padding: 10px 0 14px;
     border-bottom: 4px solid var(--ink);
   }
   /* Léger décalage de calage, comme une impression à deux passages */
@@ -80,7 +130,7 @@
   }
   .pseudo input:focus { border-color: var(--red); }
   .pseudo.flash input { animation: flash 0.7s; }
-  @keyframes flash { 0%, 60% { border-color: var(--red); background: rgba(236, 79, 44, 0.08); } }
+  @keyframes flash { 0%, 60% { border-color: var(--red); background: rgba(236, 79, 44, 0.12); } }
   .pseudo-error { margin-top: 6px; max-width: 280px; font-size: 13px; color: var(--red); }
 
   /* Carte de membre du Cercle */
@@ -92,7 +142,8 @@
     align-items: baseline;
     padding: 10px 14px 11px;
     background: var(--jaune);
-    border: 2px solid var(--ink);
+    color: var(--night);
+    border: 2px solid var(--night);
     transform: rotate(1.5deg);
   }
   .member-label { grid-column: 1 / -1; font: 700 11px var(--font); text-transform: uppercase; letter-spacing: 0.08em; }
@@ -122,15 +173,15 @@
     background: var(--c);
   }
   .tab:hover { background: var(--paper-2); }
-  .tab[aria-selected="true"] { background: var(--c); color: var(--paper); }
-  .tab[aria-selected="true"]::before { background: var(--paper); }
+  .tab[aria-selected="true"] { background: var(--c); color: var(--cream); }
+  .tab[aria-selected="true"]::before { background: var(--cream); }
   .tab-n { margin-left: 7px; font-weight: 400; opacity: 0.65; text-transform: none; }
 
   /* ---------- Boutons et liens ---------- */
   .btn {
     padding: 13px 22px 12px;
     background: var(--sec);
-    color: var(--paper);
+    color: var(--cream);
     border: 0;
     border-radius: 0;
     font: 800 15px var(--font);
@@ -140,8 +191,8 @@
     white-space: nowrap;
     cursor: pointer;
   }
-  .btn:hover { background: var(--ink); }
-  .btn:disabled { background: var(--ink-3); cursor: wait; }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn:disabled { background: var(--ink-3); color: var(--paper); cursor: wait; }
   .btn-sm { padding: 7px 13px 6px; font-size: 13px; }
   .link {
     padding: 0;
@@ -156,7 +207,7 @@
   }
   .link:hover { color: var(--red); }
 
-  /* ---------- Bloc d'introduction de chaque onglet ---------- */
+  /* ---------- Bloc d'introduction ---------- */
   .intro {
     display: flex;
     justify-content: space-between;
@@ -197,9 +248,30 @@
   /* ---------- Film tiré ---------- */
   .film { padding-top: 26px; }
 
-  /* Le film est imprimé sur un aplat de sa couleur. Encres claires : texte foncé */
-  .film-head { padding: 22px 30px 26px; background: var(--c); color: var(--paper); transition: background 0.08s; }
-  .film-head.light, .side.light { color: var(--ink); }
+  /* Le film est imprimé sur un aplat de sa couleur. L'affiche occupe une colonne
+     entière, à fond perdu, tirée en noir et dans l'encre du bloc (niveaux de gris
+     multipliés par la couleur du fond). Ses vraies couleurs reviennent au survol. */
+  .film-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    background: var(--c);
+    color: var(--cream);
+    transition: background 0.08s;
+  }
+  .film-head.light, .side.light { color: var(--night); }
+  .film-text { min-width: 0; padding: 22px 30px 26px; }
+  .film-photo, .side-photo { position: relative; min-height: 375px; }
+  .film-photo img, .side-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.12);
+    mix-blend-mode: multiply;
+    transition: filter 0.25s, opacity 0.2s;
+  }
+  .film-photo:hover img, .side:hover .side-photo img { filter: none; mix-blend-mode: normal; }
   .stamp {
     display: inline-block;
     padding: 4px 10px 3px;
@@ -213,13 +285,13 @@
   }
   .film-title {
     margin-top: 14px;
-    font-size: clamp(48px, 9vw, 112px);
+    font-size: clamp(44px, 8.5vw, 108px);
     line-height: 0.86;
     letter-spacing: -0.012em;
     overflow-wrap: anywhere;
     text-wrap: balance;
   }
-  .film.flicker .film-rest { opacity: 0.25; }
+  .film.flicker .film-rest, .film.flicker .film-photo img { opacity: 0.25; }
   .film-rest { transition: opacity 0.2s; }
   .film-meta { margin-top: 16px; font-size: 18px; font-weight: 500; }
 
@@ -281,36 +353,42 @@
   .duel-q p { font-size: 15px; color: var(--ink-2); }
 
   .arena { position: relative; display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); }
+  /* Chaque moitié : le texte au centre, l'affiche sur le bord extérieur, en miroir */
   .side {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    min-height: 290px;
-    padding: 24px 26px 22px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 170px;
+    min-height: 300px;
+    padding: 0;
     background: var(--c);
-    color: var(--paper);
+    color: var(--cream);
     border: 0;
     font: inherit;
     text-align: left;
     cursor: pointer;
     transition: background 0.2s, color 0.2s, box-shadow 0.12s;
   }
+  .side:first-child { grid-template-columns: 170px minmax(0, 1fr); }
+  .side:first-child .side-photo { order: -1; }
   .side:last-child { border-left: 2px solid var(--ink); }
   .side:hover { box-shadow: inset 0 0 0 5px var(--ink); }
+  .side-text { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 24px 22px 22px; }
+  .side-photo { min-height: 0; }
   .side-title {
-    font-size: clamp(30px, 5.2vw, 62px);
+    display: block;
+    font-size: clamp(28px, 4.6vw, 56px);
     line-height: 0.88;
     overflow-wrap: anywhere;
     text-wrap: balance;
   }
-  .side-year { margin-top: 10px; font-size: 16px; font-weight: 500; }
+  .side-year { display: block; margin-top: 10px; font-size: 16px; font-weight: 500; }
   .side-result { margin-top: auto; padding-top: 22px; visibility: hidden; }
   .side-result .n { font: 800 34px/1 var(--font); font-stretch: 70%; font-variant-numeric: tabular-nums; }
   .side-result .unit { margin-left: 6px; font-size: 15px; }
 
-  /* Tampons posés après le vote */
+  /* Tampons posés après le vote, en bas à droite */
   .side .stamp { position: absolute; right: 18px; bottom: 20px; visibility: hidden; }
-  .side .stamp-pick { top: 18px; bottom: auto; transform: rotate(3deg); }
+  .side .stamp-pick { bottom: 62px; transform: rotate(3deg); }
 
   .arena.revealed .side { cursor: default; }
   .arena.revealed .side:hover { box-shadow: none; }
@@ -318,11 +396,13 @@
   .arena.revealed .side.win .stamp-win { visibility: visible; }
   .arena.revealed .side.picked .stamp-pick { visibility: visible; }
   .arena.revealed .side.lose { background: var(--paper-2); color: var(--ink-3); }
+  .arena.revealed .side.lose .side-photo img { filter: grayscale(1); mix-blend-mode: multiply; opacity: 0.4; }
   .arena.revealed .side.wrong .stamp-pick { color: var(--vermillon); }
 
+  /* Posé sur le bord haut de l'arène, pour ne jamais recouvrir un titre */
   .or {
     position: absolute;
-    top: 50%;
+    top: 0;
     left: 50%;
     z-index: 1;
     transform: translate(-50%, -50%) rotate(-3deg);
@@ -352,11 +432,18 @@
     .film-cols { grid-template-columns: 1fr; }
     .synopsis { padding-right: 0; }
     .watch { padding: 16px 0 20px; border-left: 0; border-top: 1px solid var(--rule); }
-    .film-head { padding: 18px 18px 22px; }
+    .film-head { grid-template-columns: minmax(0, 1fr) 112px; }
+    .film-text { padding: 18px 16px 22px 18px; }
+    .film-photo { min-height: 168px; }
+    .film-title { font-size: clamp(36px, 11vw, 56px); }
     .member { align-items: flex-start; }
-    .side { min-height: 240px; padding: 16px 14px 14px; }
-    .side .stamp { right: 10px; bottom: 12px; font-size: 11px; padding: 3px 7px 2px; }
-    .side .stamp-pick { top: auto; bottom: 46px; }
+
+    /* Moitiés trop étroites pour deux colonnes : l'affiche passe en bandeau au-dessus */
+    .side, .side:first-child { grid-template-columns: 1fr; grid-template-rows: 150px auto; min-height: 0; }
+    .side .side-photo { order: -1; }
+    .side-text { padding: 22px 12px 14px; min-height: 190px; }
+    .side .stamp { right: 8px; bottom: 12px; font-size: 11px; padding: 3px 7px 2px; }
+    .side .stamp-pick { bottom: 46px; }
     .side-result .n { font-size: 24px; }
   }
 
@@ -365,8 +452,12 @@
   }
 </style>
 </head>
-<body data-tab="hasard">
+<body data-tab="find">
 <div class="app">
+
+  <div class="topbar">
+    <button class="link" id="themeToggle" type="button"></button>
+  </div>
 
   <header class="mast">
     <div>
@@ -393,27 +484,18 @@
   </header>
 
   <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="hasard" aria-selected="true" style="--c: var(--vermillon)">Au hasard<span class="tab-n" id="nHasard"></span></button>
-    <button class="tab" role="tab" data-tab="gems" aria-selected="false" style="--c: var(--vert)">Bons films peu connus<span class="tab-n" id="nGems"></span></button>
+    <button class="tab" role="tab" data-tab="find" aria-selected="true" style="--c: var(--vermillon)">Trouver un film</button>
     <button class="tab" role="tab" data-tab="duel" aria-selected="false" style="--c: var(--bleu)">Duel<span class="tab-n" id="nDuel"></span></button>
   </nav>
 
   <main>
-    <section id="view-hasard">
-      <div class="intro" id="hasardIntro">
-        <p id="hasardText"></p>
-        <button class="btn" id="drawHasard" type="button">Tirer un film</button>
-      </div>
-      <div id="stageHasard"></div>
-      <p class="history" id="histHasard" hidden></p>
-    </section>
-
-    <section id="view-gems" hidden>
-      <div class="intro">
-        <p id="gemsText"></p>
-        <button class="btn" id="drawGems" type="button">Tirer un film</button>
-      </div>
+    <section id="view-find">
       <div class="opts">
+        <div class="opts-group" id="optFind">
+          <span class="opts-label">Dans</span>
+          <button class="opt" data-v="watchlist" aria-pressed="false">ma watchlist</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="gems" aria-pressed="true">les films peu connus</button>
+        </div>
         <div class="opts-group" id="optRating">
           <span class="opts-label">Note</span>
           <button class="opt" data-v="all" aria-pressed="true">toutes</button><span class="opts-sep">/</span>
@@ -423,13 +505,17 @@
         <div class="opts-group" id="optLength">
           <span class="opts-label">Durée</span>
           <button class="opt" data-v="all" aria-pressed="true">tout</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="short" aria-pressed="false">courts métrages</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="long" aria-pressed="false">longs métrages</button>
+          <button class="opt" data-v="short" aria-pressed="false">courts</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="long" aria-pressed="false">longs</button>
         </div>
         <p class="opts-note" id="seenNote" hidden></p>
       </div>
-      <div id="stageGems"></div>
-      <p class="history" id="histGems" hidden></p>
+      <div class="intro">
+        <p id="findText"></p>
+        <button class="btn" id="drawBtn" type="button">Tirer un film</button>
+      </div>
+      <div id="stage"></div>
+      <p class="history" id="history" hidden></p>
     </section>
 
     <section id="view-duel" hidden>
@@ -522,12 +608,50 @@ function fmtRuntime(m) {
   return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + pad(m % 60);
 }
 
+// Les affiches Letterboxd existent en plusieurs tailles : 230 × 345 pour le
+// duel, 500 × 750 pour la fiche, au lieu du 600 × 900 d'origine.
+function posterUrl(url, size) {
+  return url ? url.replace(/-0-\d+-0-\d+-crop/, '-' + size + '-crop') : null;
+}
+
+function posterImg(url, cls, name) {
+  const img = el('img', cls);
+  img.src = url;
+  img.alt = 'Affiche de ' + name;
+  img.decoding = 'async';
+  img.addEventListener('error', () => img.remove());
+  return img;
+}
+
+// ---------- Thème ----------
+const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => document.documentElement.dataset.theme
+  ? document.documentElement.dataset.theme === 'dark'
+  : darkQuery.matches;
+
+function renderThemeToggle() {
+  $('themeToggle').textContent = isDark() ? 'Mode clair' : 'Mode sombre';
+}
+
+$('themeToggle').addEventListener('click', () => {
+  const theme = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem('lb-theme', theme);
+  } catch (e) {
+    // stockage refusé : le choix vaut pour cette visite
+  }
+  renderThemeToggle();
+});
+darkQuery.addEventListener('change', renderThemeToggle);
+
 const state = {
   user: null,
   watchlist: [],
-  tab: 'hasard',
-  hist: { hasard: [], gems: [] },
-  current: { hasard: null, gems: null },
+  tab: 'find',
+  source: 'gems',
+  hist: { watchlist: [], gems: [] },
+  current: { watchlist: null, gems: null },
   counter: 0,
   gemRating: 'all',
   gemLength: 'all',
@@ -550,7 +674,6 @@ async function connect(pseudo) {
   btn.disabled = true;
   btn.textContent = '…';
   $('pseudoError').hidden = true;
-  if (state.tab === 'hasard') $('stageHasard').replaceChildren(el('p', 'blank', 'Chargement de la watchlist…'));
 
   try {
     const resp = await fetch(`${API_BASE}/api/watchlist/${encodeURIComponent(pseudo)}`);
@@ -562,19 +685,19 @@ async function connect(pseudo) {
 
     state.user = pseudo;
     state.watchlist = data.films || [];
-    state.current.hasard = null;
-    state.hist.hasard = [];
+    state.current.watchlist = null;
+    state.hist.watchlist = [];
     state.seenSkipped = 0;
     duel.seen = null;
     renderProfile();
-    refresh();
-    if (state.tab === 'hasard' && state.watchlist.length) draw('hasard');
+
+    // Un pseudo saisi, c'est d'abord sa watchlist qu'on veut voir
+    setFindSource('watchlist');
   } catch (e) {
     pseudoError('Serveur injoignable.');
   } finally {
     btn.disabled = false;
     btn.textContent = 'OK';
-    if (!state.user) refresh();
   }
 }
 
@@ -598,13 +721,14 @@ function renderProfile() {
 $('changeUser').addEventListener('click', () => {
   state.user = null;
   state.watchlist = [];
-  state.current.hasard = null;
-  state.hist.hasard = [];
+  state.current.watchlist = null;
+  state.hist.watchlist = [];
   state.seenSkipped = 0;
   duel.seen = null;
   if (duel.source !== 'popular') setSource('popular');
   renderProfile();
-  refresh();
+  if (state.source === 'watchlist') setFindSource('gems');
+  else refresh();
   $('pseudoInput').value = '';
   $('pseudoInput').focus();
 });
@@ -626,51 +750,61 @@ function setTab(name) {
   state.tab = name;
   document.body.dataset.tab = name;
   for (const t of document.querySelectorAll('.tab')) t.setAttribute('aria-selected', t.dataset.tab === name);
-  for (const v of ['hasard', 'gems', 'duel']) $('view-' + v).hidden = v !== name;
+  for (const v of ['find', 'duel']) $('view-' + v).hidden = v !== name;
 
-  if (name === 'gems' && !state.current.gems) draw('gems');
+  if (name === 'find' && !state.current[state.source]) draw(state.source);
   if (name === 'duel' && !duel.pair && !duel.loading) setSource(duel.source);
 }
 
+// Watchlist ou films peu connus : chaque source garde son film et son historique.
+function setFindSource(src) {
+  state.source = src;
+  for (const b of $('optFind').querySelectorAll('.opt')) b.setAttribute('aria-pressed', b.dataset.v === src);
+  refresh();
+
+  const entry = state.current[src];
+  if (entry) show(src, entry);
+  else if (state.tab === 'find') draw(src);
+}
+
 function refresh() {
-  // Au hasard
-  if (state.user) {
+  const src = state.source;
+  const gemsOn = src === 'gems';
+  $('optRating').hidden = !gemsOn;
+  $('optLength').hidden = !gemsOn;
+
+  // Texte d'en-tête et état vide de la source affichée
+  if (gemsOn) {
+    $('findText').replaceChildren(gems ? el('strong', null, `${num(gems.length)} films peu connus`) : '');
+  } else {
     const n = state.watchlist.length;
-    $('hasardIntro').hidden = false;
-    $('hasardText').replaceChildren(
+    $('findText').replaceChildren(
       document.createTextNode('Watchlist de '),
       el('strong', null, '@' + state.user),
       document.createTextNode(` · ${n} film${n > 1 ? 's' : ''}`),
     );
-    if (!n) $('stageHasard').replaceChildren(el('p', 'blank', 'Watchlist vide ou privée.'));
-    else if (!state.current.hasard) $('stageHasard').replaceChildren();
-  } else {
-    $('hasardIntro').hidden = true;
-    $('histHasard').hidden = true;
-    $('stageHasard').replaceChildren(el('p', 'blank', 'Pas de pseudo.'));
+    if (!n) $('stage').replaceChildren(el('p', 'blank', 'Watchlist vide ou privée.'));
   }
+  if (!state.current[src] && (gemsOn || state.watchlist.length)) $('stage').replaceChildren();
+  renderHistory(src);
 
-  // Bons films peu connus
-  $('gemsText').replaceChildren(gems ? el('strong', null, `${num(gems.length)} films`) : '');
   const s = state.seenSkipped;
-  $('seenNote').hidden = !(state.user && s);
+  $('seenNote').hidden = !(gemsOn && state.user && s);
   $('seenNote').textContent = `${s} déjà vu${s > 1 ? 's' : ''} écarté${s > 1 ? 's' : ''}`;
 
-  // Duel : les sources liées au profil demandent un pseudo
+  // Les sources liées au profil demandent un pseudo
+  $('optFind').querySelector('[data-v="watchlist"]').setAttribute('aria-disabled', !state.user);
   for (const b of $('optSource').querySelectorAll('.opt')) {
     const locked = b.dataset.v !== 'popular' && !state.user;
     b.setAttribute('aria-disabled', locked);
     b.title = locked ? 'Pseudo requis' : '';
   }
 
-  $('nHasard').textContent = state.user ? state.watchlist.length : '';
-  $('nGems').textContent = gems ? num(gems.length) : '';
   $('nDuel').textContent = duel.best ? 'record ' + duel.best : '';
 }
 
-// ---------- Tirage (watchlist et bons films peu connus) ----------
-$('drawHasard').addEventListener('click', () => draw('hasard'));
-$('drawGems').addEventListener('click', () => draw('gems'));
+// ---------- Tirage ----------
+$('drawBtn').addEventListener('click', () => draw(state.source));
 
 async function loadGems() {
   if (!gems) {
@@ -722,8 +856,8 @@ async function hasSeen(user, slug) {
   }
 }
 
-// Avec un pseudo, chaque film tiré est vérifié auprès de Letterboxd. On
-// abandonne après quelques films déjà vus plutôt que de faire attendre.
+// Avec un pseudo, chaque film peu connu tiré est vérifié auprès de Letterboxd.
+// On abandonne après quelques films déjà vus plutôt que de faire attendre.
 async function pickGem(pool) {
   const user = state.user;
   for (let tries = 0; tries < 8; tries++) {
@@ -735,7 +869,7 @@ async function pickGem(pool) {
 
     const check = await hasSeen(user, gem.slug);
     if (check.notFound) {
-      $('stageGems').replaceChildren(el('p', 'blank error', check.error));
+      $('stage').replaceChildren(el('p', 'blank error', check.error));
       return null;
     }
     if (!check.seen) return gem;
@@ -743,7 +877,7 @@ async function pickGem(pool) {
     state.seenSkipped++;
     refresh();
   }
-  $('stageGems').replaceChildren(el('p', 'blank', 'Les derniers films tirés sont déjà vus.'));
+  $('stage').replaceChildren(el('p', 'blank', 'Les derniers films tirés sont déjà vus.'));
   return null;
 }
 
@@ -771,11 +905,11 @@ function flicker(block, pool) {
 }
 
 async function draw(kind) {
-  if (state.drawing) return;
-  if (kind === 'hasard' && !state.user) return askPseudo();
-  if (kind === 'hasard' && !state.watchlist.length) return;
+  if (state.drawing || kind !== state.source) return;
+  if (kind === 'watchlist' && !state.user) return askPseudo();
+  if (kind === 'watchlist' && !state.watchlist.length) return;
 
-  const stage = kind === 'gems' ? $('stageGems') : $('stageHasard');
+  const stage = $('stage');
   state.drawing = true;
   let stop = null;
 
@@ -789,7 +923,7 @@ async function draw(kind) {
     const shown = stage.querySelector('.film');
     if (shown && !reduced) stop = flicker(shown, pool);
 
-    const film = kind === 'gems' ? await pickGem(pool) : pickFrom(pool, state.hist.hasard, false);
+    const film = kind === 'gems' ? await pickGem(pool) : pickFrom(pool, state.hist.watchlist, false);
     if (!film) return;
 
     // Les détails se chargent pendant que les titres défilent
@@ -810,14 +944,15 @@ async function draw(kind) {
 
 function show(kind, entry) {
   state.current[kind] = entry;
-  const stage = kind === 'gems' ? $('stageGems') : $('stageHasard');
-  stage.replaceChildren(filmBlock(entry));
-  renderHistory(kind);
+  if (kind === state.source) {
+    $('stage').replaceChildren(filmBlock(entry));
+    renderHistory(kind);
+  }
 
   if (entry.d) return;
   getDetails(entry.film, kind === 'gems').then(d => {
     entry.d = d;
-    if (state.current[kind] === entry) stage.replaceChildren(filmBlock(entry));
+    if (state.current[kind] === entry && state.source === kind) $('stage').replaceChildren(filmBlock(entry));
   });
 }
 
@@ -836,8 +971,8 @@ function getDetails(film, withArchive) {
 }
 
 async function loadDetails(film, withArchive) {
-  // Note, nombre de notes, durée, réalisation et identifiant TMDB viennent de
-  // la page Letterboxd. Les films peu connus les ont déjà dans gems.json.
+  // Note, nombre de notes, durée, réalisation, affiche et identifiant TMDB
+  // viennent de la page Letterboxd. Les films peu connus les ont déjà dans gems.json.
   let lb = null;
   if (film.ratingCount == null) {
     try {
@@ -866,6 +1001,7 @@ async function loadDetails(film, withArchive) {
     ratingCount: base.ratingCount ?? null,
     runtime: base.runtime || (t && t.runtime) || null,
     directors: base.directors && base.directors.length ? base.directors : crew,
+    poster: posterUrl(base.poster, '0-500-0-750') || (t && t.poster_path ? 'https://image.tmdb.org/t/p/w500' + t.poster_path : null),
     genres: t ? (t.genres || []).map(g => g.name).slice(0, 3) : [],
     overview: t ? t.overview || '' : '',
     watch: t ? watchOf(t) : null,
@@ -949,9 +1085,10 @@ function filmBlock(entry) {
   const f = entry.film;
   const d = entry.d || {};
   const loaded = Boolean(entry.d);
+  const name = d.name || f.name;
   const box = el('article', 'film');
 
-  // Aplat de couleur : numéro de tirage, titre, année, durée, réalisation
+  // Aplat de couleur : affiche, numéro de tirage, titre, année, durée, réalisation
   const runtime = d.runtime || f.runtime;
   const directors = (d.directors && d.directors.length ? d.directors : f.directors) || [];
   const length = runtime ? fmtRuntime(runtime) + (runtime <= 40 ? ', court métrage' : '') : '';
@@ -959,11 +1096,18 @@ function filmBlock(entry) {
 
   const head = el('div', 'film-head');
   paint(head, PALETTE[inkIndex(f.slug)]);
-  head.append(
+  const text = el('div', 'film-text');
+  text.append(
     el('span', 'stamp', 'Tirage N° ' + pad(entry.n)),
-    el('h3', 'film-title narrow', d.name || f.name),
+    el('h3', 'film-title narrow', name),
     el('p', 'film-meta', meta),
   );
+
+  // Colonne de l'affiche, gardée vide le temps qu'elle arrive
+  const photo = el('div', 'film-photo');
+  const poster = d.poster || posterUrl(f.poster, '0-500-0-750');
+  if (poster) photo.append(posterImg(poster, null, name));
+  head.append(text, photo);
   box.append(head);
 
   // Moyenne, nombre de notes, genres
@@ -1026,7 +1170,8 @@ function watchBlock(film, d, loaded) {
 }
 
 function renderHistory(kind) {
-  const box = kind === 'gems' ? $('histGems') : $('histHasard');
+  if (kind !== state.source) return;
+  const box = $('history');
   const hist = state.hist[kind];
   box.hidden = hist.length < 2;
 
@@ -1052,6 +1197,7 @@ function bindOpts(id, onChange) {
   });
 }
 
+bindOpts('optFind', v => setFindSource(v));
 bindOpts('optRating', v => {
   state.gemRating = v;
   draw('gems');
@@ -1330,17 +1476,23 @@ function side(film, i, ink) {
   const b = el('button', 'side');
   b.type = 'button';
   paint(b, ink);
-  b.append(
-    el('span', 'side-title narrow', film.name),
-    el('span', 'side-year', film.year || ''),
-    el('span', 'stamp stamp-pick', 'Ton choix'),
-    el('span', 'stamp stamp-win', 'Le plus noté'),
-  );
 
   const result = el('span', 'side-result');
   result.id = 'result' + i;
   result.append(el('span', 'n'), el('span', 'unit', 'notes'));
-  b.append(result);
+
+  const text = el('span', 'side-text');
+  text.append(
+    el('span', 'side-title narrow', film.name),
+    el('span', 'side-year', film.year || ''),
+    result,
+    el('span', 'stamp stamp-pick', 'Ton choix'),
+    el('span', 'stamp stamp-win', 'Le plus noté'),
+  );
+
+  const photo = el('span', 'side-photo');
+  if (film.poster) photo.append(posterImg(posterUrl(film.poster, '0-230-0-345'), null, film.name));
+  b.append(text, photo);
 
   b.addEventListener('click', () => vote(i));
   return b;
@@ -1439,15 +1591,16 @@ document.addEventListener('keydown', e => {
 
   if (e.key === ' ' && !onButton) {
     e.preventDefault();
-    draw(state.tab);
+    draw(state.source);
   }
 });
 
 // ---------- Démarrage ----------
+renderThemeToggle();
 renderProfile();
 refresh();
 renderScore();
-loadGems().catch(() => {});
+draw('gems');
 </script>
 </body>
 </html>

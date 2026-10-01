@@ -1,10 +1,17 @@
 # Le Cercle des films disparus
 
-Trois onglets, à partir de Letterboxd :
+Deux onglets, à partir de Letterboxd :
 
-- **Au hasard** — tire un film dans la watchlist publique d'un profil
-- **Bons films peu connus** — tire un film très bien noté que presque personne n'a vu
+- **Trouver un film** — tire un film dans la watchlist publique d'un profil, ou
+  parmi des films très bien notés que presque personne n'a vus
 - **Duel** — deux films s'affrontent, il faut deviner lequel a le plus de notes
+
+Le site suit le thème clair ou sombre du système ; le lien en haut à droite
+force l'un ou l'autre (choix gardé dans le `localStorage`, clé `lb-theme`).
+
+Les affiches viennent de Letterboxd, en 500 × 750 pour la fiche et 230 × 345
+pour le duel, avec repli sur TMDB. Elles sont imprimées dans l'encre du bloc
+(niveaux de gris multipliés par la couleur) et reprennent leurs couleurs au survol.
 
 ## Prérequis
 
@@ -25,19 +32,24 @@ Puis ouvrir http://localhost:3000
 
 ## Utilisation
 
-Le pseudo Letterboxd se saisit une fois, en haut de la page, pour tous les
-onglets. Il charge la watchlist et débloque les sources du duel liées au profil.
+Le pseudo Letterboxd se saisit une fois, en haut de la page. Il charge la
+watchlist, débloque les sources liées au profil et écarte les films déjà vus.
 
-### Au hasard
+### Trouver un film
 
-Un film tiré dans la watchlist. La fiche combine la page Letterboxd (moyenne,
-nombre de notes, durée, réalisation, via `/api/film/:slug`) et TMDB (genres,
-synopsis en français, offres de streaming). Les films déjà tirés restent
-accessibles en bas de la fiche.
+Deux sources, chacune garde son film et son historique :
 
-### Bons films peu connus
+- **ma watchlist** — un film tiré dans la watchlist (pseudo requis)
+- **les films peu connus** — la source par défaut sans pseudo, voir plus bas
 
-L'onglet **Bons films peu connus** tire un film peu connu
+La fiche combine la page Letterboxd (moyenne, nombre de notes, durée,
+réalisation, affiche, via `/api/film/:slug`) et TMDB (genres, synopsis en
+français, offres de streaming). Les films déjà tirés restent accessibles en bas
+de la fiche.
+
+### Films peu connus
+
+La source **les films peu connus** tire un film peu connu
 mais bien noté : **moins de 5 000 notes sur Letterboxd et au moins 3/5, ou moins
 de 20 000 notes pour les films à 4/5 et plus**, sortis il y a plus de deux ans (un film récent
 a peu de notes parce qu'il est récent, pas parce qu'il est méconnu). Letterboxd bloque le nombre de
