@@ -1,9 +1,10 @@
-# 🎬 Letterboxd · Film du hasard
+# Le Cercle des films disparus
 
-Deux modes :
+Trois onglets, à partir de Letterboxd :
 
-- **🎲 Film du hasard** — tire un film au hasard dans la watchlist publique d'un profil
-- **⚔️ Duel de popularité** — deux films s'affrontent, devine lequel a le plus de notes sur Letterboxd
+- **Au hasard** — tire un film dans la watchlist publique d'un profil
+- **Bons films peu connus** — tire un film très bien noté que presque personne n'a vu
+- **Duel** — deux films s'affrontent, il faut deviner lequel a le plus de notes
 
 ## Prérequis
 
@@ -24,15 +25,19 @@ Puis ouvrir http://localhost:3000
 
 ## Utilisation
 
-### Mode film du hasard
+Le pseudo Letterboxd se saisit une fois, en haut de la page, pour tous les
+onglets. Il charge la watchlist et débloque les sources du duel liées au profil.
 
-1. Entre un nom d'utilisateur Letterboxd, clique **Charger** (ou Entrée)
-2. Un film est tiré au hasard avec sa fiche (poster, synopsis, genres) via TMDB
-3. **🎲 Autre film** pour en tirer un nouveau
+### Au hasard
+
+Un film tiré dans la watchlist. La fiche combine la page Letterboxd (moyenne,
+nombre de notes, durée, réalisation, via `/api/film/:slug`) et TMDB (genres,
+synopsis en français, offres de streaming). Les films déjà tirés restent
+accessibles en bas de la fiche.
 
 ### Bons films peu connus
 
-Dans le mode hasard, l'onglet **Bons films peu connus** tire un film peu connu
+L'onglet **Bons films peu connus** tire un film peu connu
 mais bien noté : **moins de 5 000 notes sur Letterboxd et au moins 3/5, ou moins
 de 20 000 notes pour les films à 4/5 et plus**, sortis il y a plus de deux ans (un film récent
 a peu de notes parce qu'il est récent, pas parce qu'il est méconnu). Letterboxd bloque le nombre de
@@ -151,15 +156,15 @@ quelques fois sur soixante avec une centaine de films.
 
 Trois sources au choix :
 
-- **Films populaires** — le pool pré-calculé de `public/films.json`
-- **Mes films vus** — une centaine de films vus (voir la limite plus bas)
-- **Ma watchlist** — la watchlist complète, donc un pool plus large
+- **populaires** — le pool pré-calculé de `public/films.json`
+- **que j'ai vus** — une centaine de films vus (voir la limite plus bas)
+- **de ma watchlist** — la watchlist complète, donc un pool plus large
 
 Pour les deux sources liées à un profil, les films déjà présents dans le pool
 sont jouables immédiatement ; les autres se chargent en tâche de fond pendant
 que tu joues.
 
-Au clavier : **←** / **→** pour voter, **Entrée** pour le duel suivant.
+Au clavier : **Espace** tire un film, **←** / **→** votent pendant un duel, **Entrée** passe au suivant.
 
 ## Le pool de films
 
