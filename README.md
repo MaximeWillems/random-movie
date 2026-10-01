@@ -9,9 +9,10 @@ Deux onglets, à partir de Letterboxd :
 Le site suit le thème clair ou sombre du système ; le lien en haut à droite
 force l'un ou l'autre (choix gardé dans le `localStorage`, clé `lb-theme`).
 
-Les affiches viennent de Letterboxd, en 500 × 750 pour la fiche et 230 × 345
-pour le duel, avec repli sur TMDB. Elles sont imprimées dans l'encre du bloc
-(niveaux de gris multipliés par la couleur) et reprennent leurs couleurs au survol.
+Les affiches viennent de Letterboxd (en 500 × 750, au lieu du 600 × 900
+d'origine), avec repli sur TMDB. Dans la fiche, l'affiche est posée dans le bloc
+de couleur, le texte coule autour ; dans le duel, chaque film est un ticket de
+cinéma, affiche en haut et talon de couleur en dessous.
 
 ## Prérequis
 

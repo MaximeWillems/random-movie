@@ -248,20 +248,25 @@
   /* ---------- Film tiré ---------- */
   .film { padding-top: 26px; }
 
-  /* Le film est imprimé sur un aplat de sa couleur. L'affiche occupe une colonne
-     entière, à fond perdu, tirée en noir et dans l'encre du bloc (niveaux de gris
-     multipliés par la couleur du fond). Ses vraies couleurs reviennent au survol. */
+  /* Le film est imprimé sur un aplat de sa couleur, l'affiche habillée par le texte */
   .film-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 250px;
+    display: flow-root;
+    padding: 22px 30px 26px;
     background: var(--c);
     color: var(--cream);
     transition: background 0.08s;
   }
   .film-head.light, .side.light { color: var(--night); }
-  .film-text { min-width: 0; padding: 22px 30px 26px; }
-  .film-photo { position: relative; min-height: 375px; }
-  .film-photo img, .side-photo img {
+  .film-poster {
+    float: right;
+    width: 210px;
+    aspect-ratio: 2 / 3;
+    margin: 0 0 8px 28px;
+    border: 2px solid var(--night);
+    background: rgba(0, 0, 0, 0.14);
+    object-fit: cover;
+  }
+  .side-photo img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -269,8 +274,6 @@
     object-fit: cover;
     transition: filter 0.25s, opacity 0.2s;
   }
-  .film-photo img { filter: grayscale(1) contrast(1.12); mix-blend-mode: multiply; }
-  .film-photo:hover img { filter: none; mix-blend-mode: normal; }
   .stamp {
     display: inline-block;
     padding: 4px 10px 3px;
@@ -290,8 +293,8 @@
     overflow-wrap: anywhere;
     text-wrap: balance;
   }
-  .film.flicker .film-rest, .film.flicker .film-photo img { opacity: 0.25; }
-  .film-rest { transition: opacity 0.2s; }
+  .film.flicker .film-rest, .film.flicker .film-poster { opacity: 0.25; }
+  .film-rest, .film-poster { transition: opacity 0.2s; }
   .film-meta { margin-top: 16px; font-size: 18px; font-weight: 500; }
 
   .facts {
@@ -438,9 +441,8 @@
     .film-cols { grid-template-columns: 1fr; }
     .synopsis { padding-right: 0; }
     .watch { padding: 16px 0 20px; border-left: 0; border-top: 1px solid var(--rule); }
-    .film-head { grid-template-columns: minmax(0, 1fr) 112px; }
-    .film-text { padding: 18px 16px 22px 18px; }
-    .film-photo { min-height: 168px; }
+    .film-head { padding: 18px 18px 22px; }
+    .film-poster { width: 96px; margin-left: 14px; }
     .film-title { font-size: clamp(36px, 11vw, 56px); }
     .member { align-items: flex-start; }
 
@@ -1100,18 +1102,16 @@ function filmBlock(entry) {
 
   const head = el('div', 'film-head');
   paint(head, PALETTE[inkIndex(f.slug)]);
-  const text = el('div', 'film-text');
-  text.append(
+
+  // Place de l'affiche gardée vide le temps qu'elle arrive
+  const poster = d.poster || posterUrl(f.poster, '0-500-0-750');
+  if (poster) head.append(posterImg(poster, 'film-poster', name));
+  else if (!loaded) head.append(el('div', 'film-poster'));
+  head.append(
     el('span', 'stamp', 'Tirage N° ' + pad(entry.n)),
     el('h3', 'film-title narrow', name),
     el('p', 'film-meta', meta),
   );
-
-  // Colonne de l'affiche, gardée vide le temps qu'elle arrive
-  const photo = el('div', 'film-photo');
-  const poster = d.poster || posterUrl(f.poster, '0-500-0-750');
-  if (poster) photo.append(posterImg(poster, null, name));
-  head.append(text, photo);
   box.append(head);
 
   // Moyenne, nombre de notes, genres
