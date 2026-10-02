@@ -67,7 +67,9 @@ Deux sources, chacune garde son film et son historique :
 
 Seul le bouton « Tirer un film » (ou Espace) lance un tirage. Les 5 derniers
 films tirés sont au-dessus du ticket, « Tout voir » ouvre les autres (jusqu'à
-100 par source). Les recherches survivent à un rechargement.
+100 par source). Les recherches survivent à un rechargement ; « effacer » les
+remet à zéro, et elles repartent de zéro d'elles-mêmes après une semaine sans
+visite (profil et filtres gardés).
 
 ### Films peu connus
 

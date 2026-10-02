@@ -394,7 +394,7 @@
   .history { position: relative; display: flex; align-items: baseline; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); white-space: nowrap; }
   .history.empty { visibility: hidden; }
   .history-last { display: flex; flex: 1; gap: 16px; min-width: 0; overflow: hidden; }
-  .history-all { flex: none; }
+  .history-all, .history-clear { flex: none; }
   .history-last .link, .history-panel .link { display: inline-flex; align-items: baseline; gap: 5px; min-width: 0; max-width: 24ch; color: var(--ink-2); text-decoration: none; }
   .history-last .link:hover, .history-panel .link:hover { color: var(--red); }
   /* Le dernier tiré garde son titre, les plus anciens se serrent */
@@ -717,6 +717,7 @@
         <span>Déjà tirés</span>
         <div class="history-last" id="historyLast"></div>
         <button class="link history-all" id="historyAll" type="button" aria-expanded="false" hidden></button>
+        <button class="link history-clear" id="historyClear" type="button">effacer</button>
         <div class="history-panel" id="historyPanel" hidden></div>
       </div>
       <div id="stage"></div>
@@ -893,6 +894,7 @@ const isSeen = f => seenKeys.has(filmKey(f));
 // Profil importé, films tirés, choix et compteur de tirage survivent à un
 // rechargement. Les détails des films (résumé, où le voir) sont relus.
 const FIND_KEY = 'lb-find';
+const HIST_TTL = 7 * 24 * 3600 * 1000;
 
 function saveFind() {
   const strip = list => list.map(e => ({ film: e.film, n: e.n }));
@@ -905,6 +907,7 @@ function saveFind() {
     counter: state.counter,
     gemRating: state.gemRating,
     gemLength: state.gemLength,
+    savedAt: Date.now(),
     hist: { watchlist: strip(state.hist.watchlist), gems: strip(state.hist.gems) },
     current: {
       watchlist: state.current.watchlist ? state.current.watchlist.n : null,
@@ -935,12 +938,15 @@ function loadFind() {
   state.ratings = imported ? find.ratings || [] : [];
   indexSeen();
 
+  // Sans visite depuis une semaine, les tirages repartent de zéro ; profil et choix restent
+  const stale = Boolean(find.savedAt) && Date.now() - find.savedAt > HIST_TTL;
+
   state.source = find.source === 'watchlist' && state.user ? 'watchlist' : 'gems';
-  state.counter = find.counter || 0;
+  state.counter = stale ? 0 : find.counter || 0;
   state.gemRating = find.gemRating || 'all';
   state.gemLength = find.gemLength || 'all';
   for (const kind of ['watchlist', 'gems']) {
-    state.hist[kind] = (kind === 'watchlist' && !imported) ? [] : (find.hist && find.hist[kind]) || [];
+    state.hist[kind] = stale || (kind === 'watchlist' && !imported) ? [] : (find.hist && find.hist[kind]) || [];
     state.current[kind] = state.hist[kind].find(e => e.n === (find.current && find.current[kind])) || null;
   }
 
@@ -1620,6 +1626,16 @@ function renderHistory(kind) {
   $('historyAll').textContent = `Tout voir (${hist.length})`;
   if (hist.length <= HIST_SHOWN) closeHistory();
 }
+
+// Efface les tirages des deux sources : les numéros repartent de 01
+$('historyClear').addEventListener('click', () => {
+  closeHistory();
+  state.hist = { watchlist: [], gems: [] };
+  state.current = { watchlist: null, gems: null };
+  state.counter = 0;
+  $('stage').replaceChildren();
+  refresh();
+});
 
 function closeHistory() {
   $('historyPanel').hidden = true;
