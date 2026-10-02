@@ -1091,15 +1091,19 @@ function gemPool(list) {
     .filter(g => state.gemLength === 'all' || (state.gemLength === 'short' ? isShort(g) : !isShort(g)));
 }
 
-// Tire un film en évitant les derniers sortis. Pondéré par la note pour les
-// films peu connus : un film à 4/5 sort 9 fois plus souvent qu'un film à 3/5.
-function pickFrom(pool, hist, weighted) {
+// Tire un film en évitant les derniers sortis, avec un poids par film.
+// Films peu connus : un film à 4/5 sort 9 fois plus souvent qu'un film à 3/5.
+const gemWeight = g => Math.pow(3, (g.rating - 3) * 2);
+// Watchlist : un film de l'année sort moins souvent, il n'est peut-être sorti
+// qu'aux États-Unis et pas encore en Europe
+const watchWeight = f => (Number(f.year) === NOW ? 0.4 : 1);
+
+function pickFrom(pool, hist, weight) {
   const avoid = new Set(hist.slice(-Math.min(5, pool.length - 1)).map(h => h.film.slug));
   let cands = pool.filter(f => !avoid.has(f.slug));
   if (!cands.length) cands = pool;
-  if (!weighted) return cands[Math.floor(Math.random() * cands.length)];
 
-  const w = cands.map(g => Math.pow(3, (g.rating - 3) * 2));
+  const w = cands.map(weight);
   let r = Math.random() * w.reduce((a, b) => a + b, 0);
   for (let i = 0; i < cands.length; i++) {
     r -= w[i];
@@ -1133,7 +1137,7 @@ async function pickGem(pool) {
     const cands = user ? pool.filter(g => seenCache.get(seenKey(user, g.slug)) !== true) : pool;
     if (!cands.length) break;
 
-    const gem = pickFrom(cands, state.hist.gems, true);
+    const gem = pickFrom(cands, state.hist.gems, gemWeight);
     if (!user) return gem;
 
     const check = await hasSeen(user, gem.slug);
@@ -1164,7 +1168,7 @@ async function pickReleased(pool) {
     const cands = pool.filter(f => !unreleased.has(f.slug));
     if (!cands.length) break;
 
-    const film = pickFrom(cands, state.hist.watchlist, false);
+    const film = pickFrom(cands, state.hist.watchlist, watchWeight);
     if (Number(film.year) < NOW - 1) return film;
 
     const d = await getDetails(film, false);
