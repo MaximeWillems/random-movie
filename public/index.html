@@ -478,11 +478,15 @@
   .verdict.ko strong { color: var(--red); }
   .duel-level { padding-top: 12px; font-size: 14px; color: var(--ink-2); }
 
-  /* ---------- Accueil ---------- */
-  .home .ticket { margin-top: 34px; }
-  .home .film-title { font-size: clamp(38px, 5.6vw, 70px); }
-  .home .film-meta { max-width: 52ch; }
-  .home .btn { display: inline-block; margin-top: 26px; text-decoration: none; }
+  /* ---------- Accueil : deux tickets côte à côte, un par salle ---------- */
+  .home-intro { padding: 18px 0; border-bottom: 1px solid var(--rule); font-size: 18px; color: var(--ink-2); }
+  .rooms { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
+  .rooms .ticket { --stub: 118px; }
+  .rooms .ticket-main { align-items: stretch; }
+  .room { display: flex; flex-direction: column; align-items: flex-start; }
+  .room .synopsis { margin-bottom: 22px; }
+  .room .btn { margin-top: auto; background: var(--cream); color: var(--night); text-decoration: none; }
+  .room .btn:hover, .room .btn:focus-visible { background: var(--night); color: var(--cream); }
 
   /* ---------- Mobile ---------- */
   @media (max-width: 720px) {
@@ -491,6 +495,7 @@
     .mast > div:last-child, .pseudo-row, .pseudo input { width: 100%; }
     .tab { padding: 10px 11px 9px; font-size: 14px; }
     .intro .btn { width: 100%; }
+    .rooms { grid-template-columns: 1fr; }
     .ticket { grid-template-columns: 1fr; -webkit-mask: none; mask: none; }
     .stub { flex-direction: row; flex-wrap: wrap; justify-content: space-around; gap: 12px 20px; border-right: 0; border-bottom: 2px solid color-mix(in srgb, currentColor 55%, transparent); }
     .ticket-main { grid-template-columns: minmax(0, 1fr) 96px; gap: 14px; padding: 18px; }
@@ -518,20 +523,37 @@
     <button class="link" id="themeToggle" type="button"></button>
   </div>
 
-  <!-- Accueil : rien n'est tiré tant qu'on n'est pas entré dans la découverte -->
+  <!-- Accueil : les deux salles du site. Rien n'est tiré tant qu'on n'est pas entré. -->
   <section class="home" id="home">
     <header class="mast">
       <h1 class="logo"><span class="visually-hidden">Séance 404</span></h1>
     </header>
-    <div class="ticket" style="--c: var(--t-bleu)">
-      <dl class="stub">
-        <div class="field big"><dt>Séance</dt><dd>404</dd></div>
-      </dl>
-      <div class="ticket-main no-poster">
-        <div>
-          <h2 class="film-title narrow">Des films peu connus, tirés au hasard</h2>
-          <p class="film-meta">Bien notés sur Letterboxd, avec où les voir. Et un duel : lequel de deux films a le plus de notes ?</p>
-          <a class="btn" href="#decouvrir">Tirer un film</a>
+    <p class="home-intro">Des films peu connus à découvrir, et un jeu sur la popularité des films. Tout vient de Letterboxd.</p>
+
+    <div class="rooms">
+      <div class="ticket" style="--c: var(--t-bleu)">
+        <dl class="stub">
+          <div class="field big"><dt>Salle</dt><dd>01</dd></div>
+        </dl>
+        <div class="ticket-main no-poster">
+          <div class="room">
+            <h2 class="film-title narrow">Trouver un film</h2>
+            <p class="synopsis">Un film tiré au hasard parmi des films peu connus mais bien notés, ou dans ta watchlist. Avec sa note, son résumé et où le voir. Avec ton pseudo, les films que tu as déjà vus sont écartés.</p>
+            <a class="btn" href="#decouvrir">Tirer un film</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket" style="--c: var(--t-framboise)">
+        <dl class="stub">
+          <div class="field big"><dt>Salle</dt><dd>02</dd></div>
+        </dl>
+        <div class="ticket-main no-poster">
+          <div class="room">
+            <h2 class="film-title narrow">Duel</h2>
+            <p class="synopsis">Deux films, une question : lequel a le plus de notes sur Letterboxd ? Parmi les films populaires, ceux que tu as vus ou ta watchlist. Ta série et ton record sont gardés.</p>
+            <a class="btn" href="#duel">Jouer</a>
+          </div>
         </div>
       </div>
     </div>
@@ -832,6 +854,9 @@ function setTab(name) {
   document.body.dataset.tab = name;
   for (const t of document.querySelectorAll('.tab')) t.setAttribute('aria-selected', t.dataset.tab === name);
   for (const v of ['find', 'duel']) $('view-' + v).hidden = v !== name;
+
+  // L'adresse suit l'onglet, pour qu'un rechargement rouvre le même
+  history.replaceState(null, '', name === 'duel' ? '#duel' : '#decouvrir');
 
   if (name === 'find' && !state.current[state.source]) draw(state.source);
   if (name === 'duel' && !duel.pair && !duel.loading) setSource(duel.source);
@@ -1686,13 +1711,14 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ---------- Accueil ou découverte, selon l'adresse ----------
+// ---------- Accueil ou salle, selon l'adresse ----------
 // Le premier film n'est tiré qu'à l'entrée dans la découverte, jamais sur l'accueil.
 function route() {
-  const home = location.hash !== '#decouvrir';
+  const page = location.hash.slice(1);
+  const home = page !== 'decouvrir' && page !== 'duel';
   $('home').hidden = !home;
   $('site').hidden = home;
-  if (!home && state.tab === 'find' && !state.current[state.source]) draw(state.source);
+  if (!home) setTab(page === 'duel' ? 'duel' : 'find');
 }
 window.addEventListener('hashchange', route);
 
