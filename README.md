@@ -32,6 +32,9 @@ fiches Letterboxd des films (ticket et verdict du duel).
 
 Séance 404 n'est pas affilié à Letterboxd.
 
+Les polices (Archivo, Jersey 10, licence SIL OFL) sont servies par le site,
+depuis `public/fonts/` : aucun visiteur n'est envoyé chez Google Fonts.
+
 ## Prérequis
 
 - [Node.js](https://nodejs.org/) v18 ou plus récent, seulement pour le serveur
