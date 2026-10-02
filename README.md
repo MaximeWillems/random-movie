@@ -1,4 +1,6 @@
-# Le Cercle des films disparus
+# Séance 404
+
+![Séance 404](public/logo.svg)
 
 Deux onglets, à partir de Letterboxd :
 
