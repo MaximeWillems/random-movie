@@ -1372,6 +1372,7 @@ const PATTERN_SETS = [
   { from: 100, patterns: ['CCCCA', 'BBCBB', 'CBCBC'] },
 ];
 const RECORD_KEY = 'lb-duel-record';
+const PLAY_KEY = 'lb-duel-play';
 
 const duel = {
   source: 'popular',
@@ -1379,6 +1380,8 @@ const duel = {
   seen: null,
   pool: [],
   pair: null,
+  tier: null,
+  pending: null,
   revealed: false,
   loading: false,
   token: 0,
@@ -1390,8 +1393,33 @@ const duel = {
 };
 try {
   duel.best = parseInt(localStorage.getItem(RECORD_KEY), 10) || 0;
+
+  // Partie en cours : série, motif de difficulté et duel pas encore joué
+  const play = JSON.parse(localStorage.getItem(PLAY_KEY) || 'null');
+  if (play) {
+    duel.streak = play.streak || 0;
+    duel.pattern = play.pattern || '';
+    duel.step = play.step || 0;
+    duel.pending = play.pending || null;
+  }
 } catch (e) {
   duel.best = 0;
+}
+
+// Recharger la page ne doit ni changer de duel ni remettre la série à zéro.
+// Un duel déjà joué n'est pas gardé : le rechargement passe au suivant.
+function saveDuel() {
+  const play = {
+    streak: duel.streak,
+    pattern: duel.pattern,
+    step: duel.step,
+    pending: duel.pair && !duel.revealed ? { pair: duel.pair, tier: duel.tier } : null,
+  };
+  try {
+    localStorage.setItem(PLAY_KEY, JSON.stringify(play));
+  } catch (e) {
+    // stockage refusé : la partie vaut pour cette visite
+  }
 }
 
 const sortPool = list => list.sort((a, b) => b.ratingCount - a.ratingCount);
@@ -1588,15 +1616,20 @@ function nextTier() {
 
 function newDuel() {
   stopCountdown();
-  const [pair, tier] = pickPair(nextTier());
+
+  // Duel laissé en suspens avant un rechargement : on le reprend tel quel
+  const [pair, tier] = duel.pending ? [duel.pending.pair, duel.pending.tier] : pickPair(nextTier());
+  duel.pending = null;
   if (!pair) {
     duelStatus('Pas assez de films pour un duel.', true);
     return;
   }
 
   duel.pair = pair;
+  duel.tier = tier;
   duel.revealed = false;
-  $('tier').textContent = TIERS[tier].label;
+  saveDuel();
+  $('tier').textContent = TIERS[tier] ? TIERS[tier].label : '';
 
   // Deux encres différentes pour les deux films
   const ia = inkIndex(pair[0].slug);
@@ -1694,6 +1727,7 @@ function vote(choice) {
       // stockage refusé : le record reste en mémoire
     }
   }
+  saveDuel();
   renderScore(record);
 
   const times = ratio(a, b).toFixed(1).replace('.', ',');
