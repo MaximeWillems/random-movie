@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Page introuvable : même page 404 qu'en ligne
+app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'public', '404.html')));
+
 app.listen(PORT, () => {
   console.log('\n✅  Serveur lancé → http://localhost:' + PORT + '\n');
 });

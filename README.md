@@ -48,6 +48,18 @@ npm start
 `server.js` ne fait que servir `public/` : le site est entièrement statique et
 peut être hébergé tel quel.
 
+## Mise en ligne
+
+Le site est entièrement statique : il est publié tel quel depuis `public/` sur
+**Cloudflare Pages** (gratuit, sans mise en veille), redéployé à chaque push sur
+`main`.
+
+- Projet Pages relié au dépôt GitHub, sans commande de build, dossier de sortie `public`
+- Domaine personnalisé `random-movie.pikilab.app`, ajouté depuis le projet Pages
+- `public/_headers` : politique de sécurité (seules les polices Google, l'API et
+  les images TMDB et la recherche Internet Archive sont permises) et cache
+- `public/404.html` : page des adresses inconnues
+
 ## Utilisation
 
 L'export Letterboxd s'importe une fois, en haut de la page (« Importer mon
