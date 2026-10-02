@@ -1150,6 +1150,32 @@ async function pickGem(pool) {
   return null;
 }
 
+// Watchlist sans les films pas encore sortis. Sans année ou avec une année à
+// venir, le film est écarté d'office ; pour l'année en cours et la précédente,
+// TMDB dit s'il est sorti.
+const unreleased = new Set();
+
+function watchPool() {
+  return state.watchlist.filter(f => f.year && Number(f.year) <= NOW && !unreleased.has(f.slug));
+}
+
+async function pickReleased(pool) {
+  for (let tries = 0; tries < 8; tries++) {
+    const cands = pool.filter(f => !unreleased.has(f.slug));
+    if (!cands.length) break;
+
+    const film = pickFrom(cands, state.hist.watchlist, false);
+    if (Number(film.year) < NOW - 1) return film;
+
+    const d = await getDetails(film, false);
+    if (d.released !== false) return film;
+
+    unreleased.add(film.slug);
+  }
+  $('stage').replaceChildren(el('p', 'blank', 'Les derniers films tirés ne sont pas encore sortis.'));
+  return null;
+}
+
 // Les titres et les encres défilent tant que le tirage n'est pas fini, et au
 // moins huit fois.
 function flicker(block, pool) {
@@ -1183,7 +1209,7 @@ async function draw(kind) {
   let stop = null;
 
   try {
-    const pool = kind === 'gems' ? gemPool(await loadGems()) : state.watchlist;
+    const pool = kind === 'gems' ? gemPool(await loadGems()) : watchPool();
     if (!pool.length) {
       stage.replaceChildren(el('p', 'blank', 'Aucun film avec ces filtres.'));
       return;
@@ -1192,7 +1218,7 @@ async function draw(kind) {
     const shown = stage.querySelector('.film');
     if (shown && !reduced) stop = flicker(shown, pool);
 
-    const film = kind === 'gems' ? await pickGem(pool) : pickFrom(pool, state.hist.watchlist, false);
+    const film = kind === 'gems' ? await pickGem(pool) : await pickReleased(pool);
     if (!film) return;
 
     // Les détails se chargent pendant que les titres défilent
@@ -1277,6 +1303,8 @@ async function loadDetails(film, withArchive) {
     watch: t ? watchOf(t) : null,
     tmdbId: tmdbId || null,
     archive,
+    // Sorti : statut « Released » sur TMDB ou date de sortie passée ; inconnu sans fiche TMDB
+    released: t ? t.status === 'Released' || Boolean(t.release_date && t.release_date <= new Date().toISOString().slice(0, 10)) : null,
     partial: Boolean(tmdbId && !t) || (film.ratingCount == null && !lb),
   };
 }
