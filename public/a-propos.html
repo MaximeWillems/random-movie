@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>À propos — Séance 404</title>
+<meta name="description" content="Ce qu'est Séance 404, d'où viennent ses données (TMDB, JustWatch, Letterboxd) et ce qu'il fait de tes données : rien ne quitte ton navigateur.">
+<link rel="canonical" href="https://random-movie.pikilab.app/a-propos.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#f3ede1">
+<script>
+  // Même thème que le site, appliqué avant l'affichage
+  try {
+    const theme = localStorage.getItem('lb-theme');
+    if (theme) document.documentElement.dataset.theme = theme;
+  } catch (e) {
+    // stockage refusé : on suit le thème du système
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper: #f3ede1;
+    --ink: #1a1820;
+    --ink-2: #5d5862;
+    --ink-3: #9b958f;
+    --rule: #cbc3b3;
+    --vermillon: #ec4f2c;
+    --font: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17151b;
+      --ink: #efe8da;
+      --ink-2: #aaa39b;
+      --ink-3: #6d6870;
+      --rule: #38343f;
+      --vermillon: #f0603c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #17151b;
+    --ink: #efe8da;
+    --ink-2: #aaa39b;
+    --ink-3: #6d6870;
+    --rule: #38343f;
+    --vermillon: #f0603c;
+    color-scheme: dark;
+  }
+
+  body { background: var(--paper); color: var(--ink); font: 400 16px/1.6 var(--font); -webkit-font-smoothing: antialiased; }
+  .page { max-width: 760px; margin: 0 auto; padding: 24px 32px 48px; }
+  .mast { padding-bottom: 14px; border-bottom: 4px solid var(--ink); }
+  .logo { display: block; width: 300px; max-width: 100%; aspect-ratio: 1693 / 247; background: var(--ink); -webkit-mask: url(logo.svg) center / contain no-repeat; mask: url(logo.svg) center / contain no-repeat; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  h2 { margin-top: 28px; font: 900 44px/0.95 var(--font); font-stretch: 62%; text-transform: uppercase; }
+  h3 { margin-top: 30px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); font: 700 15px var(--font); text-transform: uppercase; letter-spacing: 0.06em; }
+  p, ul { margin-top: 12px; }
+  ul { padding-left: 20px; }
+  li + li { margin-top: 6px; }
+  a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--vermillon); }
+  .back { display: inline-block; margin-top: 36px; font-weight: 700; }
+  .tmdb { display: block; margin-top: 14px; }
+  .tmdb img { display: block; height: 16px; width: auto; }
+  @media (max-width: 720px) { .page { padding: 18px 18px 40px; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="mast">
+    <a class="logo" href="./"><span class="visually-hidden">Séance 404, accueil</span></a>
+  </header>
+
+  <h2>À propos</h2>
+  <p>Séance 404 aide à trouver quoi regarder hors des sentiers battus. Deux salles :</p>
+  <ul>
+    <li><strong>Trouver un film</strong> : un film tiré au hasard parmi des films peu connus mais très bien notés, ou dans ta watchlist, avec son résumé et où le voir légalement.</li>
+    <li><strong>Duel</strong> : deux films, une question. Lequel a le plus de notes sur Letterboxd ?</li>
+  </ul>
+
+  <h3>D'où viennent les données</h3>
+  <ul>
+    <li><strong>Films, résumés, genres et affiches</strong> : <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Ce site utilise l'API TMDB mais n'est ni approuvé ni certifié par TMDB.</li>
+    <li><strong>Où le voir</strong> : offres légales en Belgique et en France fournies par <a href="https://www.justwatch.com/" target="_blank" rel="noopener">JustWatch</a>, par l'intermédiaire de TMDB ; copies libres de droits sur Internet Archive.</li>
+    <li><strong>Moyennes et nombres de notes Letterboxd</strong> : relevés une fois, en août 2026 pour les films du duel et en septembre 2026 pour les films peu connus. Ils ne sont pas mis à jour en direct ; le mois est rappelé sous chaque chiffre.</li>
+    <li><strong>Ton profil</strong> : uniquement l'export que tu fais toi-même sur Letterboxd et que tu importes ici.</li>
+  </ul>
+  <p>Séance 404 n'est pas affilié à Letterboxd. Le site ne lit aucune page Letterboxd.</p>
+  <a class="tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener"><img src="tmdb.svg" alt="TMDB" width="126" height="16"></a>
+
+  <h3>Tes données</h3>
+  <ul>
+    <li>Pas de compte, pas de cookie, pas de mesure d'audience.</li>
+    <li>L'export Letterboxd est lu dans ton navigateur et n'est envoyé nulle part. Il est gardé dans le stockage local du navigateur, avec tes tirages, ta série au duel et ton thème ; « retirer » efface le profil.</li>
+    <li>Pour afficher les films, ton navigateur contacte TMDB (fiches et affiches) et Google Fonts (polices).</li>
+  </ul>
+
+  <h3>Contact</h3>
+  <p>Une erreur, une idée : <a href="https://github.com/MaximeWillems/random-movie/issues" target="_blank" rel="noopener">ouvrir un ticket sur GitHub</a>.</p>
+
+  <a class="back" href="./">← Retour aux salles</a>
+</main>
+</body>
+</html>
