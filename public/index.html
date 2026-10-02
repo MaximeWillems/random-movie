@@ -811,6 +811,81 @@ let gems = null;
 const detailCache = new Map();
 const seenCache = new Map();
 
+// ---------- Recherches gardées d'une visite à l'autre ----------
+// Pseudo, watchlist, films tirés, choix et compteur de tirage survivent à un
+// rechargement. Les détails des films (résumé, où le voir) sont relus.
+const FIND_KEY = 'lb-find';
+
+function saveFind() {
+  const strip = list => list.map(e => ({ film: e.film, n: e.n }));
+  const find = {
+    user: state.user,
+    watchlist: state.watchlist,
+    source: state.source,
+    counter: state.counter,
+    gemRating: state.gemRating,
+    gemLength: state.gemLength,
+    seenSkipped: state.seenSkipped,
+    hist: { watchlist: strip(state.hist.watchlist), gems: strip(state.hist.gems) },
+    current: {
+      watchlist: state.current.watchlist ? state.current.watchlist.n : null,
+      gems: state.current.gems ? state.current.gems.n : null,
+    },
+  };
+  try {
+    localStorage.setItem(FIND_KEY, JSON.stringify(find));
+  } catch (e) {
+    // stockage refusé ou plein : les recherches valent pour cette visite
+  }
+}
+
+function loadFind() {
+  let find = null;
+  try {
+    find = JSON.parse(localStorage.getItem(FIND_KEY) || 'null');
+  } catch (e) {
+    return;
+  }
+  if (!find) return;
+
+  state.user = find.user || null;
+  state.watchlist = state.user ? find.watchlist || [] : [];
+  state.source = find.source === 'watchlist' && state.user ? 'watchlist' : 'gems';
+  state.counter = find.counter || 0;
+  state.gemRating = find.gemRating || 'all';
+  state.gemLength = find.gemLength || 'all';
+  state.seenSkipped = find.seenSkipped || 0;
+  for (const kind of ['watchlist', 'gems']) {
+    state.hist[kind] = (find.hist && find.hist[kind]) || [];
+    state.current[kind] = state.hist[kind].find(e => e.n === (find.current && find.current[kind])) || null;
+  }
+
+  // Choix affichés comme à la dernière visite
+  const pressed = [['optFind', state.source], ['optRating', state.gemRating], ['optLength', state.gemLength]];
+  for (const [id, v] of pressed) {
+    for (const b of $(id).querySelectorAll('.opt')) b.setAttribute('aria-pressed', b.dataset.v === v);
+  }
+}
+
+// La watchlist gardée a pu changer depuis : on la relit sans rien tirer
+async function reloadWatchlist() {
+  const user = state.user;
+  if (!user) return;
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/watchlist/${encodeURIComponent(user)}`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (user !== state.user) return;
+
+    state.watchlist = data.films || [];
+    renderProfile();
+    refresh();
+  } catch (e) {
+    // serveur injoignable : on garde la watchlist enregistrée
+  }
+}
+
 // ---------- Profil ----------
 $('pseudoForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -953,6 +1028,10 @@ function refresh() {
   }
 
   $('nDuel').textContent = duel.best ? 'record ' + duel.best : '';
+
+  // Le nombre de films peu connus s'affiche même sans tirage, après un rechargement
+  if (gemsOn && !gems) loadGems().catch(() => {});
+  saveFind();
 }
 
 // ---------- Tirage ----------
@@ -1096,6 +1175,7 @@ async function draw(kind) {
 
 function show(kind, entry) {
   state.current[kind] = entry;
+  saveFind();
   if (kind === state.source) {
     $('stage').replaceChildren(filmBlock(entry));
     renderHistory(kind);
@@ -1367,10 +1447,12 @@ function bindOpts(id, onChange) {
 bindOpts('optFind', v => setFindSource(v));
 bindOpts('optRating', v => {
   state.gemRating = v;
+  saveFind();
   draw('gems');
 });
 bindOpts('optLength', v => {
   state.gemLength = v;
+  saveFind();
   draw('gems');
 });
 bindOpts('optSource', v => setSource(v));
@@ -1839,10 +1921,16 @@ function route() {
 window.addEventListener('hashchange', route);
 
 // ---------- Démarrage ----------
+loadFind();
 renderThemeToggle();
 renderProfile();
 refresh();
 renderScore();
+
+// Film affiché à la dernière visite remis en place, sans nouveau tirage
+const lastEntry = state.current[state.source];
+if (lastEntry) show(state.source, lastEntry);
+reloadWatchlist();
 route();
 </script>
 </body>
