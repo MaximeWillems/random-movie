@@ -271,7 +271,8 @@
     text-decoration-thickness: 3px;
     text-underline-offset: 5px;
   }
-  .opt[aria-disabled="true"] { color: var(--ink-3); cursor: not-allowed; }
+  /* Choix qui demandent un pseudo : grisés mais cliquables, le clic mène au champ pseudo */
+  .opt[aria-disabled="true"] { color: var(--ink-3); }
   .opts-note { color: var(--ink-2); font-size: 14px; }
 
   /* ---------- Film tiré ---------- */
