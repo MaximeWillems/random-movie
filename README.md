@@ -176,6 +176,22 @@ enchaîne seul. Le duel en cours et la série survivent à un rechargement.
 
 Au clavier : **Espace** tire un film, **←** / **→** votent pendant un duel, **Entrée** passe au suivant.
 
+## Relevé à la main des notes Letterboxd
+
+Pour remplacer le relevé de 2026 par des chiffres relevés par une personne :
+
+```bash
+node scripts/liste-a-relever.js   # tools/a-relever.json : 150 films de duel, 150 peu connus
+npm start                          # puis http://localhost:3000/outils/saisie.html
+```
+
+La liste ne contient aucun chiffre Letterboxd : titre, année, affiche et durée
+viennent de TMDB. Pour chaque film, la page ouvre la fiche Letterboxd ; on lit
+la moyenne et le nombre de notes (au survol de la moyenne) et on les tape. La
+progression est gardée dans le navigateur. À la fin, la page exporte
+`films.json` et `gems.json` au format du site, avec les critères des films peu
+connus réappliqués. `tools/` n'est servi qu'en local, jamais mis en ligne.
+
 ## Affiches
 
 `scripts/tmdb-posters.js` ajoute à `films.json` et `gems.json` l'identifiant et

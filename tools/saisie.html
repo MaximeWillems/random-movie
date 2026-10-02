@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relevé à la main — Séance 404</title>
+<meta name="robots" content="noindex">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --paper: #f3ede1; --paper-2: #e6dfd0; --ink: #1a1820; --ink-2: #5d5862; --ink-3: #9b958f; --rule: #cbc3b3; --bleu: #2e4ea1; --vert: #1e8a5a; --vermillon: #ec4f2c; }
+  body { background: var(--paper); color: var(--ink); font: 400 15px/1.5 'Helvetica Neue', Arial, sans-serif; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 20px 24px 40px; }
+  h1 { font-size: 22px; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-top: 10px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); color: var(--ink-2); }
+  .bar b { color: var(--ink); }
+  .grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 28px; margin-top: 20px; }
+
+  /* Film en cours */
+  .card { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-content: start; }
+  .card img { width: 110px; aspect-ratio: 2 / 3; object-fit: cover; background: var(--paper-2); }
+  .kind { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+  .title { margin-top: 2px; font-size: 22px; font-weight: 800; line-height: 1.15; }
+  .open { display: inline-block; margin-top: 10px; padding: 7px 12px; background: var(--bleu); color: #fff; font-weight: 700; text-decoration: none; }
+  .hint { margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+  form { grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 6px; }
+  label { display: grid; gap: 3px; font-size: 13px; color: var(--ink-2); }
+  input { padding: 8px 10px; border: 2px solid var(--ink); background: #fff; font: 600 18px Arial, sans-serif; }
+  input.bad { border-color: var(--vermillon); }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { padding: 8px 14px; border: 2px solid var(--ink); background: var(--paper); font: 700 14px Arial, sans-serif; cursor: pointer; }
+  button.main { background: var(--ink); color: var(--paper); }
+  .done-note { font-size: 13px; color: var(--vert); }
+
+  /* Liste des films */
+  .filters { display: flex; gap: 6px; margin-bottom: 8px; }
+  .filters button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .list { max-height: 70vh; overflow-y: auto; border-top: 1px solid var(--rule); }
+  .row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 70px 90px; gap: 8px; align-items: baseline; width: 100%; padding: 5px 4px; border: 0; border-bottom: 1px solid var(--rule); background: none; font: 400 14px Arial, sans-serif; text-align: left; cursor: pointer; }
+  .row:hover, .row.on { background: var(--paper-2); }
+  .row .ok { color: var(--vert); font-weight: 700; }
+  .row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .num { text-align: right; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .export { margin-top: 24px; padding-top: 14px; border-top: 2px solid var(--ink); }
+  .export p { margin-top: 6px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Relevé à la main des notes Letterboxd</h1>
+  <div class="bar">
+    <span><b id="nDone">0</b> / <span id="nAll">0</span> relevés</span>
+    <span id="dates"></span>
+    <span>Entrée : enregistrer et passer au suivant</span>
+  </div>
+
+  <div class="grid">
+    <section class="card" id="card">
+      <img id="poster" alt="">
+      <div>
+        <p class="kind" id="kind"></p>
+        <p class="title" id="title"></p>
+        <a class="open" id="open" target="_blank" rel="noopener">Ouvrir la fiche Letterboxd ↗</a>
+        <p class="hint">Sur la fiche, survole la moyenne : « Weighted average of <b>4.14</b> based on <b>10,198</b> ratings ».</p>
+      </div>
+      <form id="form" autocomplete="off">
+        <label>Moyenne (sur 5)<input id="rating" inputmode="decimal"></label>
+        <label>Nombre de notes<input id="count" inputmode="numeric"></label>
+        <div class="buttons">
+          <button class="main" type="submit">Enregistrer et suivant</button>
+          <button type="button" id="prev">Précédent</button>
+          <button type="button" id="skip">Passer</button>
+          <button type="button" id="clear">Effacer ce relevé</button>
+        </div>
+        <p class="done-note" id="doneNote"></p>
+      </form>
+    </section>
+
+    <section>
+      <div class="filters" id="filters">
+        <button type="button" data-v="todo" aria-pressed="true">À faire</button>
+        <button type="button" data-v="done" aria-pressed="false">Faits</button>
+        <button type="button" data-v="all" aria-pressed="false">Tous</button>
+      </div>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+
+  <section class="export">
+    <div class="buttons">
+      <button class="main" type="button" id="exportDuel">Télécharger films.json (duel)</button>
+      <button class="main" type="button" id="exportGems">Télécharger gems.json (films peu connus)</button>
+    </div>
+    <p id="exportNote">Les fichiers ne contiennent que les films relevés. Ils remplacent ceux de <code>public/</code>.</p>
+  </section>
+</div>
+
+<script>
+// Page de saisie locale : chaque chiffre est lu par une personne sur la fiche
+// Letterboxd et tapé ici. Rien n'est prérempli ni lu automatiquement.
+const STORE = 'seance404-releve';
+const $ = id => document.getElementById(id);
+const nf = new Intl.NumberFormat('fr-FR');
+
+let films = [];
+let done = {};
+let index = 0;
+let filter = 'todo';
+
+try {
+  done = JSON.parse(localStorage.getItem(STORE) || '{}');
+} catch (e) {
+  done = {};
+}
+
+function save() {
+  localStorage.setItem(STORE, JSON.stringify(done));
+}
+
+// Moyenne avec virgule ou point, nombre de notes avec espaces, points ou virgules
+const readRating = v => {
+  const r = parseFloat(String(v).replace(',', '.'));
+  return r >= 0.5 && r <= 5 ? Math.round(r * 100) / 100 : null;
+};
+const readCount = v => {
+  const n = parseInt(String(v).replace(/\D/g, ''), 10);
+  return n > 0 ? n : null;
+};
+
+function show(i) {
+  index = (i + films.length) % films.length;
+  const f = films[index];
+  const r = done[f.slug];
+
+  $('poster').src = f.posterPath ? 'https://image.tmdb.org/t/p/w185' + f.posterPath : '';
+  $('kind').textContent = f.kind === 'duel' ? 'Duel' : 'Film peu connu';
+  $('title').textContent = `${f.name} (${f.year})`;
+  $('open').href = `https://letterboxd.com/film/${f.slug}/`;
+  $('rating').value = r ? String(r.rating).replace('.', ',') : '';
+  $('count').value = r ? r.ratingCount : '';
+  $('doneNote').textContent = r ? `Relevé le ${new Date(r.at).toLocaleDateString('fr-FR')}` : '';
+  for (const input of [$('rating'), $('count')]) input.classList.remove('bad');
+  $('rating').focus();
+  renderList();
+}
+
+function next() {
+  // Prochain film pas encore relevé, sinon le suivant tout court
+  for (let k = 1; k <= films.length; k++) {
+    const j = (index + k) % films.length;
+    if (!done[films[j].slug]) return show(j);
+  }
+  show(index + 1);
+}
+
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const rating = readRating($('rating').value);
+  const ratingCount = readCount($('count').value);
+  $('rating').classList.toggle('bad', rating == null);
+  $('count').classList.toggle('bad', ratingCount == null);
+  if (rating == null || ratingCount == null) return;
+
+  done[films[index].slug] = { rating, ratingCount, at: new Date().toISOString() };
+  save();
+  next();
+});
+
+$('prev').addEventListener('click', () => show(index - 1));
+$('skip').addEventListener('click', () => show(index + 1));
+$('clear').addEventListener('click', () => {
+  delete done[films[index].slug];
+  save();
+  show(index);
+});
+
+for (const b of $('filters').querySelectorAll('button')) {
+  b.addEventListener('click', () => {
+    filter = b.dataset.v;
+    for (const x of $('filters').querySelectorAll('button')) x.setAttribute('aria-pressed', x === b);
+    renderList();
+  });
+}
+
+function renderList() {
+  const rows = [];
+  films.forEach((f, i) => {
+    const r = done[f.slug];
+    if (filter === 'todo' && r) return;
+    if (filter === 'done' && !r) return;
+
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'row' + (i === index ? ' on' : '');
+    row.innerHTML = `<span class="ok">${r ? '✓' : ''}</span><span class="name"></span><span class="num">${r ? String(r.rating).replace('.', ',') : ''}</span><span class="num">${r ? nf.format(r.ratingCount) : ''}</span>`;
+    row.querySelector('.name').textContent = `${f.kind === 'duel' ? 'D' : 'P'} · ${f.name} (${f.year})`;
+    row.addEventListener('click', () => show(i));
+    rows.push(row);
+  });
+  $('list').replaceChildren(...rows);
+
+  // Progression et période du relevé
+  const entries = Object.values(done);
+  $('nDone').textContent = films.filter(f => done[f.slug]).length;
+  $('nAll').textContent = films.length;
+  const days = entries.map(e => e.at.slice(0, 10)).sort();
+  $('dates').textContent = days.length ? `relevé du ${days[0]} au ${days[days.length - 1]}` : '';
+}
+
+// Fichiers au format du site, seulement avec les films relevés
+function download(name, data) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+const withStats = f => ({ slug: f.slug, name: f.name, year: f.year, ...done[f.slug], at: undefined, tmdbId: f.tmdbId, posterPath: f.posterPath });
+
+$('exportDuel').addEventListener('click', () => {
+  const list = films.filter(f => f.kind === 'duel' && done[f.slug]).map(withStats);
+  download('films.json', list);
+  $('exportNote').textContent = `films.json : ${list.length} films.`;
+});
+
+// Mêmes critères que la sélection d'origine : moins de 5 000 notes et au moins
+// 3/5, ou moins de 20 000 notes et au moins 4/5 ; sorti il y a plus de deux ans
+$('exportGems').addEventListener('click', () => {
+  const year = new Date().getFullYear();
+  const relevés = films.filter(f => f.kind === 'gems' && done[f.slug]);
+  const list = relevés
+    .map(f => ({ ...withStats(f), runtime: f.runtime }))
+    .filter(g => (g.ratingCount < 5000 && g.rating >= 3) || (g.ratingCount < 20000 && g.rating >= 4))
+    .filter(g => g.year && g.year <= year - 2);
+  download('gems.json', list);
+  $('exportNote').textContent = `gems.json : ${list.length} films gardés sur ${relevés.length} relevés (les autres ne passent plus les critères).`;
+});
+
+(async () => {
+  const data = await (await fetch('a-relever.json')).json();
+  films = [
+    ...data.duel.map(f => ({ ...f, kind: 'duel' })),
+    ...data.gems.map(f => ({ ...f, kind: 'gems' })),
+  ];
+  const first = films.findIndex(f => !done[f.slug]);
+  show(first < 0 ? 0 : first);
+})();
+</script>
+</body>
+</html>

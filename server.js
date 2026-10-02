@@ -13,6 +13,9 @@ const PORT = process.env.PORT || 3000;
 // Adresses sans .html, comme en ligne (/a-propos)
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
+// Outils locaux, jamais mis en ligne : page de relevé à la main
+app.use('/outils', express.static(path.join(__dirname, 'tools')));
+
 // Page introuvable : même page 404 qu'en ligne
 app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'public', '404.html')));
 
