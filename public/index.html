@@ -608,7 +608,7 @@
           <div class="room">
             <h2 class="film-title narrow">Trouver un film</h2>
             <p class="synopsis">Un film tiré au hasard parmi des films peu connus mais bien notés, ou dans ta watchlist. Avec sa note, son résumé et où le voir.</p>
-            <a class="btn" href="#decouvrir">Tirer un film</a>
+            <a class="btn" id="homeDraw" href="#decouvrir">Tirer un film</a>
           </div>
         </div>
       </div>
@@ -1012,7 +1012,6 @@ function setTab(name) {
   // L'adresse suit l'onglet, pour qu'un rechargement rouvre le même
   history.replaceState(null, '', name === 'duel' ? '#duel' : '#decouvrir');
 
-  if (name === 'find' && !state.current[state.source]) draw(state.source);
   if (name === 'duel' && !duel.pair && !duel.loading) setSource(duel.source);
 }
 
@@ -1022,9 +1021,10 @@ function setFindSource(src) {
   for (const b of $('optFind').querySelectorAll('.opt')) b.setAttribute('aria-pressed', b.dataset.v === src);
   refresh();
 
+  // Seul le bouton « Tirer un film » lance un tirage : changer de source
+  // remet le dernier film de cette source, ou laisse la place vide
   const entry = state.current[src];
   if (entry) show(src, entry);
-  else if (state.tab === 'find') draw(src);
 }
 
 function refresh() {
@@ -1068,7 +1068,10 @@ function refresh() {
 }
 
 // ---------- Tirage ----------
+// Les deux boutons « Tirer un film », dans la page et sur l'accueil, sont les
+// seuls à lancer un tirage
 $('drawBtn').addEventListener('click', () => draw(state.source));
+$('homeDraw').addEventListener('click', () => draw(state.source));
 
 async function loadGems() {
   if (!gems) {
@@ -1512,12 +1515,10 @@ bindOpts('optFind', v => setFindSource(v));
 bindOpts('optRating', v => {
   state.gemRating = v;
   saveFind();
-  draw('gems');
 });
 bindOpts('optLength', v => {
   state.gemLength = v;
   saveFind();
-  draw('gems');
 });
 bindOpts('optSource', v => setSource(v));
 
