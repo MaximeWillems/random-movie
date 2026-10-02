@@ -444,7 +444,6 @@
   .duel-q { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 20px; flex-wrap: wrap; padding: 22px 0 14px; }
   .duel-q h2 { font: 700 24px/1.15 var(--font); font-stretch: 85%; }
   .duel-q p { font-size: 15px; color: var(--ink-2); }
-  .duel-q .duel-src { margin-right: auto; font-size: 12px; color: var(--ink-3); }
 
   .arena { position: relative; display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); }
   /* Chaque moitié est un ticket : l'affiche au naturel en haut, puis le talon
@@ -527,6 +526,8 @@
 
   .duel-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 86px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
   .verdict { font-size: 17px; max-width: 60ch; }
+  .verdict-links { display: block; margin-top: 4px; font-size: 13px; color: var(--ink-2); }
+  .verdict-links a { color: inherit; }
   .btn-next { display: inline-flex; align-items: center; gap: 10px; padding-left: 12px; }
 
   /* Décompte avant le duel suivant, dans le bouton, comme l'amorce des vieilles
@@ -649,7 +650,7 @@
         <div class="ticket-main no-poster">
           <div class="room">
             <h2 class="film-title narrow">Duel</h2>
-            <p class="synopsis">Devine lequel est le plus populaire sur Letterboxd.</p>
+            <p class="synopsis">Devine lequel est le plus populaire.</p>
             <a class="btn" href="#duel">Jouer</a>
           </div>
         </div>
@@ -698,8 +699,8 @@
         <div class="opts-group" id="optRating">
           <span class="opts-label">Note</span>
           <button class="opt" data-v="all" aria-pressed="true">toutes</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="3.5" aria-pressed="false">3,5 et plus</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="4" aria-pressed="false">4 et plus</button>
+          <button class="opt" data-v="7" aria-pressed="false">7/10 et plus</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="7.5" aria-pressed="false">7,5/10 et plus</button>
         </div>
         <div class="opts-group" id="optLength">
           <span class="opts-label">Durée</span>
@@ -742,8 +743,7 @@
       <p class="blank" id="duelStatus" hidden></p>
       <div id="duelGame" hidden>
         <div class="duel-q">
-          <h2>Lequel a le plus de notes ?</h2>
-          <p class="duel-src">Notes Letterboxd relevées en août 2026</p>
+          <h2>Lequel est le plus populaire ?</h2>
           <!-- Palier de difficulté calculé mais pas montré au joueur -->
           <p id="tier" hidden></p>
         </div>
@@ -766,20 +766,19 @@
   <footer class="foot">
     <a class="foot-tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener"><img src="tmdb.svg" alt="TMDB" width="110" height="14"></a>
     <p>Ce site utilise l'API TMDB mais n'est ni approuvé ni certifié par TMDB. Offres de visionnage : <a href="https://www.justwatch.com/" target="_blank" rel="noopener">JustWatch</a>.</p>
-    <p>Séance 404 n'est pas affilié à Letterboxd. Moyennes et nombres de notes Letterboxd relevés en août et septembre 2026.</p>
+    <p>Séance 404 n'est pas affilié à Letterboxd ; il renvoie vers ses fiches de films.</p>
     <p><a href="/a-propos">À propos</a></p>
   </footer>
 </div>
 
 <script>
-// Aucune page Letterboxd n'est lue : les films, résumés, affiches et offres
-// viennent de l'API TMDB ; le profil, de l'export que le membre importe.
+// Aucune donnée Letterboxd : films, notes, popularité, résumés, affiches et
+// offres viennent de l'API TMDB ; le profil, de l'export que le membre importe.
+// Letterboxd n'apparaît que par les liens vers ses fiches.
 const TMDB_KEY = '8265bd1679663a7ea12ac168da84d2e8';
 const TMDB = 'https://api.themoviedb.org/3';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/';
 
-// Moyennes et nombres de notes Letterboxd : relevés figés, avec leur mois
-const STATS_MONTH = { pool: 'août 2026', gems: 'sept. 2026' };
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const nf = new Intl.NumberFormat('fr-FR');
@@ -826,7 +825,8 @@ function paint(node, ink) {
   node.classList.toggle('light', ink.light);
 }
 
-const fmtRating = r => r.toFixed(2).replace('.', ',');
+// Moyenne TMDB, sur 10
+const fmtVote = v => v.toFixed(1).replace('.', ',');
 const pad = n => String(n).padStart(2, '0');
 const isShort = f => f.runtime && f.runtime <= 40;
 function fmtRuntime(m) {
@@ -943,7 +943,7 @@ function loadFind() {
 
   state.source = find.source === 'watchlist' && state.user ? 'watchlist' : 'gems';
   state.counter = stale ? 0 : find.counter || 0;
-  state.gemRating = find.gemRating || 'all';
+  state.gemRating = ['7', '7.5'].includes(find.gemRating) ? find.gemRating : 'all';
   state.gemLength = find.gemLength || 'all';
   for (const kind of ['watchlist', 'gems']) {
     state.hist[kind] = stale || (kind === 'watchlist' && !imported) ? [] : (find.hist && find.hist[kind]) || [];
@@ -1200,7 +1200,7 @@ async function loadGems() {
   if (!gems) {
     const resp = await fetch('gems.json');
     if (!resp.ok) throw new Error('gems.json introuvable');
-    gems = (await resp.json()).map(g => ({ ...g, src: 'gems' }));
+    gems = await resp.json();
     refresh();
   }
   return gems;
@@ -1208,13 +1208,17 @@ async function loadGems() {
 
 function gemPool(list) {
   return list
-    .filter(g => state.gemRating === 'all' || g.rating >= Number(state.gemRating))
+    .filter(g => state.gemRating === 'all' || (g.votes >= MIN_VOTES_NOTE && g.vote >= Number(state.gemRating)))
     .filter(g => state.gemLength === 'all' || (state.gemLength === 'short' ? isShort(g) : !isShort(g)));
 }
 
 // Tire un film en évitant les derniers sortis, avec un poids par film.
-// Films peu connus : un film à 4/5 sort 9 fois plus souvent qu'un film à 3/5.
-const gemWeight = g => Math.pow(3, (g.rating - 3) * 2);
+// Films peu connus : les mieux notés sortent plus souvent, un point de plus sur
+// 10 triple les chances. Avec peu de votes, la note est ramenée vers 6,5 pour
+// qu'un 10/10 sur un seul vote ne passe pas devant tout.
+const MIN_VOTES_NOTE = 5;
+const steadyVote = g => ((g.vote || 0) * (g.votes || 0) + 6.5 * 10) / ((g.votes || 0) + 10);
+const gemWeight = g => Math.pow(3, steadyVote(g) - 6);
 // Watchlist : un film de l'année sort moins souvent, il n'est peut-être sorti
 // qu'aux États-Unis et pas encore en Europe
 const watchWeight = f => (Number(f.year) === NOW ? 0.4 : 1);
@@ -1373,7 +1377,7 @@ async function knownFilm(film) {
 }
 
 async function loadDetails(film, withArchive) {
-  const known = film.ratingCount != null ? film : await knownFilm(film);
+  const known = film.votes != null ? film : await knownFilm(film);
   const base = { ...(known || {}), ...film };
 
   const tmdbId = base.tmdbId || await searchTmdb(base);
@@ -1383,16 +1387,15 @@ async function loadDetails(film, withArchive) {
   ]);
   const crew = t && t.credits ? t.credits.crew.filter(c => c.job === 'Director').map(c => c.name) : [];
 
-  // Moyenne et nombre de notes : nos relevés Letterboxd, sinon ceux de TMDB (notés sur 10)
-  const lb = known && known.ratingCount != null;
-  const tm = !lb && t && t.vote_count;
+  // Moyenne sur 10 et nombre de votes TMDB : ceux de la fiche, à défaut ceux de nos listes
+  const live = t && t.vote_count;
+  const kept = known && known.votes;
 
   return {
     name: base.name,
     year: base.year,
-    rating: lb ? known.rating : tm ? t.vote_average / 2 : null,
-    ratingCount: lb ? known.ratingCount : tm ? t.vote_count : null,
-    statsFrom: lb ? 'Letterboxd · ' + STATS_MONTH[known.src || 'gems'] : tm ? 'TMDB' : null,
+    vote: live ? t.vote_average : kept ? known.vote : null,
+    votes: live ? t.vote_count : kept ? known.votes : null,
     runtime: base.runtime || (t && t.runtime) || null,
     directors: base.directors && base.directors.length ? base.directors : crew,
     poster: posterUrl(base.posterPath || (t && t.poster_path), 'w500'),
@@ -1488,8 +1491,8 @@ function filmBlock(entry) {
   paint(ticket, inkOfDraw(entry.n));
 
   // Talon : numéro de tirage, moyenne, nombre de notes, genres
-  const rating = d.rating ?? f.rating;
-  const count = d.ratingCount ?? f.ratingCount;
+  const rating = d.vote ?? (f.votes ? f.vote : null);
+  const count = d.votes ?? (f.votes || null);
   const waiting = loaded ? '—' : '…';
   const stub = el('dl', 'stub');
   const field = (label, value, cls, unit) => {
@@ -1501,12 +1504,11 @@ function filmBlock(entry) {
     return div;
   };
   field('Tirage', pad(entry.n), 'big');
-  field('Moyenne', rating != null ? fmtRating(rating) : waiting, null, rating != null ? '/5' : null);
-  const notes = field('Notes', count != null ? num(count) : waiting);
+  field('Moyenne', rating != null ? fmtVote(rating) : waiting, null, rating != null ? '/10' : null);
+  const notes = field('Votes', count != null ? num(count) : waiting);
 
-  // Source des chiffres, en petit : relevé Letterboxd daté, ou TMDB
-  const from = d.statsFrom || (f.ratingCount != null ? 'Letterboxd · ' + STATS_MONTH[f.src || 'gems'] : '');
-  if (from) notes.append(el('p', 'stats-from', from));
+  // Source des chiffres, en petit
+  if (count != null) notes.append(el('p', 'stats-from', 'TMDB'));
   field('Genres', d.genres && d.genres.length ? d.genres.join(', ') : waiting, 'text');
 
   // Partie principale : titre, année, durée, réalisation et description, l'affiche à droite
@@ -1685,12 +1687,14 @@ const TIERS = {
   B: { label: 'Duel moyen', min: 0.42, max: 1.3 },
   C: { label: 'Duel difficile', min: 0, max: 0.42 },
 };
-const MIN_RATINGS = 3000;
+// Seuils en votes TMDB : environ 100 fois moins nombreux que les notes Letterboxd
+// sur lesquelles le jeu avait été réglé au départ
+const MIN_VOTES = 30;
 const MIN_POOL = 6;
 const MIN_RATIO = 1.04;
 const MAX_RATIO = 12;
 // Au moins un des deux films doit être identifiable
-const PAIR_FLOOR = 120000;
+const PAIR_FLOOR = 1200;
 // Le tirage penche vers le haut du classement
 const BIAS = 1.8;
 const NOW = new Date().getFullYear();
@@ -1728,7 +1732,7 @@ try {
     duel.streak = play.streak || 0;
     duel.pattern = play.pattern || '';
     duel.step = play.step || 0;
-    duel.pending = play.pending || null;
+    duel.pending = play.pending && play.pending.pair.every(f => f.votes != null) ? play.pending : null;
   }
 } catch (e) {
   duel.best = 0;
@@ -1750,14 +1754,14 @@ function saveDuel() {
   }
 }
 
-const sortPool = list => list.sort((a, b) => b.ratingCount - a.ratingCount);
+const sortPool = list => list.sort((a, b) => b.votes - a.votes);
 
 async function loadPopular() {
   if (!duel.popular) {
     const resp = await fetch('films.json');
     if (!resp.ok) throw new Error('Films populaires indisponibles.');
-    const films = (await resp.json()).filter(f => f.name && f.ratingCount >= MIN_RATINGS);
-    duel.popular = sortPool(films.map(f => ({ ...f, src: 'pool' })));
+    const films = (await resp.json()).filter(f => f.name && f.votes >= MIN_VOTES);
+    duel.popular = sortPool(films);
   }
   return duel.popular;
 }
@@ -1808,16 +1812,16 @@ async function setSource(src) {
 }
 
 function ratio(a, b) {
-  const lo = Math.min(a.ratingCount, b.ratingCount);
-  return lo ? Math.max(a.ratingCount, b.ratingCount) / lo : 0;
+  const lo = Math.min(a.votes, b.votes);
+  return lo ? Math.max(a.votes, b.votes) / lo : 0;
 }
 function ageWeight(a, b) {
   const age = f => NOW - (f.year || NOW - 15);
   return 1 - 0.5 * Math.min(1, ((age(a) + age(b)) / 2) / 60);
 }
 function magnitudeWeight(a, b) {
-  const geo = Math.sqrt(a.ratingCount * b.ratingCount);
-  return Math.max(0.45, Math.min(1, 0.45 + 0.55 * (Math.log10(geo) - 4) / 2.5));
+  const geo = Math.sqrt(a.votes * b.votes);
+  return Math.max(0.45, Math.min(1, 0.45 + 0.55 * (Math.log10(geo) - 2) / 2.5));
 }
 function easiness(a, b) {
   const r = ratio(a, b);
@@ -1825,7 +1829,7 @@ function easiness(a, b) {
 }
 function allowed(a, b) {
   const r = ratio(a, b);
-  return r >= MIN_RATIO && r <= MAX_RATIO && Math.max(a.ratingCount, b.ratingCount) >= PAIR_FLOOR;
+  return r >= MIN_RATIO && r <= MAX_RATIO && Math.max(a.votes, b.votes) >= PAIR_FLOOR;
 }
 const pairKey = (a, b) => (a.slug < b.slug ? a.slug + '|' + b.slug : b.slug + '|' + a.slug);
 
@@ -1948,7 +1952,7 @@ function side(film, i, ink) {
 
   const result = el('span', 'side-result');
   result.id = 'result' + i;
-  result.append(el('span', 'n'), el('span', 'unit', 'notes'));
+  result.append(el('span', 'n'), el('span', 'unit', 'votes'));
 
   const text = el('span', 'side-text');
   text.append(
@@ -1956,7 +1960,7 @@ function side(film, i, ink) {
     el('span', 'side-year', film.year || ''),
     result,
     el('span', 'stamp stamp-pick', 'Ton choix'),
-    el('span', 'stamp stamp-win', 'Le plus noté'),
+    el('span', 'stamp stamp-win', 'Le plus populaire'),
   );
 
   const photo = el('span', 'side-photo');
@@ -1972,7 +1976,7 @@ function vote(choice) {
   duel.revealed = true;
 
   const [a, b] = duel.pair;
-  const win = a.ratingCount >= b.ratingCount ? 0 : 1;
+  const win = a.votes >= b.votes ? 0 : 1;
   const ok = choice === win;
 
   const arena = $('arena');
@@ -1982,7 +1986,7 @@ function vote(choice) {
   sides[1 - win].classList.add('lose');
   sides[choice].classList.add('picked');
   if (!ok) sides[choice].classList.add('wrong');
-  duel.pair.forEach((f, k) => countUp($('result' + k).querySelector('.n'), f.ratingCount));
+  duel.pair.forEach((f, k) => countUp($('result' + k).querySelector('.n'), f.votes));
 
   // Série en cours, remise à zéro à la première erreur, et record
   duel.streak = ok ? duel.streak + 1 : 0;
@@ -2004,8 +2008,20 @@ function vote(choice) {
   v.className = 'verdict ' + (ok ? 'ok' : 'ko');
   v.replaceChildren(
     el('strong', null, record ? 'Record.' : ok ? 'Bien vu.' : 'Raté.'),
-    document.createTextNode(`${duel.pair[win].name} a ${times} fois plus de notes que ${duel.pair[1 - win].name}.`),
+    document.createTextNode(`${duel.pair[win].name} est ${times} fois plus populaire que ${duel.pair[1 - win].name}.`),
   );
+
+  // Les deux fiches Letterboxd, pour aller plus loin
+  const links = el('span', 'verdict-links', 'Sur Letterboxd : ');
+  duel.pair.forEach((f, k) => {
+    if (k) links.append(document.createTextNode(' · '));
+    const a = el('a', null, f.name);
+    a.href = `https://letterboxd.com/film/${f.slug}/`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    links.append(a);
+  });
+  v.append(links);
 
   $('nextDuel').hidden = false;
   $('nextDuel').focus({ preventScroll: true });

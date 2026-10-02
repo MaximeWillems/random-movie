@@ -2,29 +2,29 @@
 
 ![Séance 404](public/logo.svg)
 
-Deux salles, autour des films de Letterboxd :
+Deux salles pour cinéphiles :
 
 - **Trouver un film** : tire un film dans ta watchlist, ou parmi des films très
   bien notés que presque personne n'a vus
-- **Duel** : deux films s'affrontent, il faut deviner lequel a le plus de notes
+- **Duel** : deux films s'affrontent, il faut deviner lequel est le plus populaire
 
 Le site suit le thème clair ou sombre du système ; le lien en haut à droite
 force l'un ou l'autre (choix gardé dans le `localStorage`, clé `lb-theme`).
 
 ## Sources des données
 
-Le site ne lit **aucune page Letterboxd**.
+Le site n'utilise **aucune donnée Letterboxd** : il renvoie seulement vers les
+fiches Letterboxd des films (ticket et verdict du duel).
 
-- **Films, résumés, genres, affiches** : API TMDB, appelée depuis le navigateur.
+- **Films, résumés, genres, affiches, notes et popularité** : API TMDB, appelée
+  depuis le navigateur. La moyenne est sur 10 ; la popularité est le nombre de
+  votes TMDB. `public/films.json` et `public/gems.json` en gardent une copie
+  (`vote`, `votes`, `runtime`), mise à jour par `node scripts/tmdb-stats.js`.
   Mention « Ce site utilise l'API TMDB mais n'est ni approuvé ni certifié par
   TMDB » et logo en pied de page, comme TMDB le demande.
 - **Où le voir** : offres légales connues de TMDB, fournies par JustWatch (cité
   sous « Où le voir » et en pied de page), Belgique puis France ; copie libre de
   droits sur Internet Archive ; recherche YouTube / Vimeo.
-- **Moyennes et nombres de notes Letterboxd** : relevés figés dans
-  `public/films.json` (août 2026) et `public/gems.json` (septembre 2026). Le mois
-  du relevé est affiché en petit sous les chiffres. Un film absent de ces deux
-  fichiers montre la moyenne et le nombre de votes TMDB, marqués « TMDB ».
 - **Profil** : l'export que le membre fait lui-même sur Letterboxd
   (*Settings → Import & Export → Export your data*). Le ZIP est lu dans le
   navigateur (lecteur de ZIP intégré, sans bibliothèque) et n'est envoyé nulle
@@ -86,11 +86,11 @@ visite (profil et filtres gardés).
 
 ### Films peu connus
 
-Des films peu connus mais bien notés : **moins de 5 000 notes sur Letterboxd et
-au moins 3/5, ou moins de 20 000 notes pour les films à 4/5 et plus**, sortis il
-y a plus de deux ans. La liste, figée dans `public/gems.json`, vient de listes
-Letterboxd de niche (réalisatrices, un pays, un genre…). Le tirage favorise les
-mieux notés : un film à 4/5 sort 9 fois plus souvent qu'un film à 3/5.
+Une sélection de films peu connus mais bien notés, sortis il y a plus de deux
+ans, figée dans `public/gems.json`. Le filtre de note (7/10, 7,5/10) ne retient
+que les films d'au moins 5 votes TMDB. Le tirage favorise les mieux notés : un
+point de plus sur 10 triple les chances, et la note d'un film à peu de votes est
+ramenée vers 6,5 pour qu'un 10/10 sur un seul vote ne passe pas devant tout.
 
 Avec un export importé, les films déjà vus sont écartés (titre et année).
 
@@ -103,18 +103,22 @@ deux compteurs se révèlent, puis on enchaîne. Mode infini.
 zéro à la première erreur. Le record est gardé dans le `localStorage` du
 navigateur (clé `lb-duel-record`), tous modes confondus.
 
-**Difficulté.** Chaque duel a un palier, affiché sous la question. Il ne
-dépend pas seulement de l'écart de notes, parce que le nombre de notes est un
+**Popularité.** C'est le nombre de votes TMDB du film, gardé dans
+`public/films.json`. La question ne cite pas la source : « Lequel est le plus
+populaire ? ». Après le vote, le verdict renvoie vers les deux fiches Letterboxd.
+
+**Difficulté.** Chaque duel a un palier, qui n'est pas affiché au joueur. Il ne
+dépend pas seulement de l'écart de votes, parce que le nombre de votes est un
 mauvais indicateur de notoriété pris isolément. Trois choses entrent en compte :
 
 - **L'écart**, en échelle logarithmique — un rapport de 2 est deux fois plus
   lisible qu'un rapport de 1,4, pas 40 % de plus.
-- **L'âge des films.** Letterboxd sous-estime les vieux titres : peu de membres
-  les ont encodés, donc leur compteur ne reflète pas leur notoriété réelle. La
+- **L'âge des films.** Les sites de notes sous-estiment les vieux titres : peu
+  de membres les ont notés, donc leur compteur ne reflète pas leur notoriété réelle. La
   pondération descend de 1 (film récent) à 0,5 (60 ans et plus).
-- **Le volume absolu.** Entre 10 000 et 50 000 notes, l'écart a beau être de
-  5×, personne n'a d'intuition sur des chiffres pareils. La pondération monte
-  de 0,45 (~10 000 notes) à 1 (au-delà de ~3 millions).
+- **Le volume absolu.** Entre 100 et 500 votes, l'écart a beau être de 5×,
+  personne n'a d'intuition sur des films aussi confidentiels. La pondération
+  monte de 0,45 (~100 votes) à 1 (au-delà de ~30 000).
 
 Le score obtenu est `log2(écart) × pondération d'âge × pondération de volume`,
 et ce sont les seuils **1,30** et **0,42** qui séparent les trois paliers. Pour
@@ -125,14 +129,13 @@ Ce que ça change concrètement :
 
 | Duel | Écart | Score | Palier |
 |---|---|---|---|
-| 10 000 vs 50 000 notes, films récents | 5× | 1,18 | Moyen |
-| Même écart, mais 1 M vs 5 M de notes | 5× | 2,17 | Facile |
-| 10 000 vs 50 000 notes, films de 1960 | 5× | 0,61 | Moyen |
-| Parasite vs Pulp Fiction | 1,28× | 0,34 | Difficile |
-| Deux classiques des années 50 au même écart | 1,25× | 0,13 | Difficile |
+| 100 vs 500 votes, films récents | 5× | 1,18 | Moyen |
+| Même écart, mais 10 000 vs 50 000 votes | 5× | 2,17 | Facile |
+| 100 vs 500 votes, films de 1960 | 5× | 0,61 | Moyen |
+| Deux classiques des années 50 à 1,25× d'écart | 1,25× | 0,13 | Difficile |
 
 Deux garde-fous s'ajoutent, indépendants du palier : l'écart est **plafonné à
-12×** et au moins un des deux films doit dépasser **120 000 notes**. Sans ça on
+12×** et au moins un des deux films doit dépasser **1 200 votes**. Sans ça on
 finit par opposer deux films que personne ne connaît, ce qui n'est pas
 difficile mais arbitraire.
 
@@ -168,17 +171,18 @@ Trois sources au choix :
 - **que j'ai vus** : les films vus de l'export qui sont dans ce pool
 - **de ma watchlist** : les films de la watchlist qui sont dans ce pool
 
-Seuls les films du pool ont un nombre de notes relevé : c'est donc lui qui
-borne les deux sources liées au profil.
+Seuls les films du pool ont leur nombre de votes dans `films.json` : c'est donc
+lui qui borne les deux sources liées au profil.
 
 Après chaque vote, un décompte de 10 secondes dans le bouton « Duel suivant »
 enchaîne seul. Le duel en cours et la série survivent à un rechargement.
 
 Au clavier : **Espace** tire un film, **←** / **→** votent pendant un duel, **Entrée** passe au suivant.
 
-## Relevé à la main des notes Letterboxd
+## Relevé à la main des notes Letterboxd (plus utilisé)
 
-Pour remplacer le relevé de 2026 par des chiffres relevés par une personne :
+Le site n'affiche plus de chiffres Letterboxd. Cet outil reste pour le jour où
+on voudrait en remettre, relevés par une personne :
 
 ```bash
 node scripts/liste-a-relever.js   # tools/a-relever.json : 150 films de duel, 150 peu connus
@@ -208,8 +212,9 @@ node scripts/tmdb-posters.js
 
 ## Limites
 
-- Les chiffres Letterboxd sont figés au mois du relevé
+- Les votes TMDB de `films.json` et `gems.json` ne bougent qu'en relançant
+  `node scripts/tmdb-stats.js` ; sur le ticket, ils sont relus en direct
 - Le profil n'est connu qu'au moment de l'export : refaire l'export de temps en
   temps pour que les films vus récemment soient écartés
-- Les films en dessous de 3 000 notes sont écartés des duels (deviner entre
-  400 et 600 notes tiendrait du pile ou face)
+- Les films en dessous de 30 votes sont écartés des duels (deviner entre 4 et 6
+  votes tiendrait du pile ou face)
