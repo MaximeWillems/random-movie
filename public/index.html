@@ -367,9 +367,15 @@
   .leaders .found .name { font-weight: 700; color: var(--sec); }
   .leaders a:hover .name { color: var(--sec); text-decoration: underline; text-underline-offset: 3px; }
 
-  .history { padding: 12px 0; border-top: 1px solid var(--ink); font-size: 14px; color: var(--ink-2); }
-  .history .link { color: var(--ink-2); }
-  .history .link.current { color: var(--sec); font-weight: 700; text-decoration: none; }
+  /* Films déjà tirés, au-dessus du ticket : ils restent en place quand la
+     hauteur du ticket change. Titres coupés, épaisseur fixe pour que rien ne
+     se décale quand on passe de l'un à l'autre. */
+  .history { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); }
+  .history .link { display: inline-flex; align-items: baseline; gap: 5px; max-width: 24ch; color: var(--ink-2); text-decoration: none; }
+  .history .link .n { font: 400 17px/1 var(--px); }
+  .history .link .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .history .link.current { color: var(--sec); }
+  .history .link.current .t { text-decoration-thickness: 2px; }
 
   .blank { padding: 22px 0; border-bottom: 1px solid var(--rule); color: var(--ink-2); }
   .blank.error { color: var(--red); }
@@ -656,8 +662,8 @@
         <p id="findText"></p>
         <button class="btn" id="drawBtn" type="button">Tirer un film</button>
       </div>
-      <div id="stage"></div>
       <p class="history" id="history" hidden></p>
+      <div id="stage"></div>
     </section>
 
     <section id="view-duel" hidden>
@@ -1422,14 +1428,16 @@ function renderHistory(kind) {
   const hist = state.hist[kind];
   box.hidden = hist.length < 2;
 
-  box.replaceChildren(document.createTextNode('Déjà tirés : '));
-  [...hist].reverse().forEach((entry, i) => {
-    if (i) box.append(document.createTextNode(', '));
-    const b = el('button', 'link' + (entry === state.current[kind] ? ' current' : ''), `${pad(entry.n)} ${entry.d ? entry.d.name : entry.film.name}`);
+  box.replaceChildren(el('span', null, 'Déjà tirés'));
+  for (const entry of [...hist].reverse()) {
+    const name = entry.d ? entry.d.name : entry.film.name;
+    const b = el('button', 'link' + (entry === state.current[kind] ? ' current' : ''));
     b.type = 'button';
+    b.title = name;
+    b.append(el('span', 'n', pad(entry.n)), el('span', 't', name));
     b.addEventListener('click', () => show(kind, entry));
     box.append(b);
-  });
+  }
 }
 
 // ---------- Choix en texte ----------
