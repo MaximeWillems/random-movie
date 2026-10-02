@@ -367,15 +367,37 @@
   .leaders .found .name { font-weight: 700; color: var(--sec); }
   .leaders a:hover .name { color: var(--sec); text-decoration: underline; text-underline-offset: 3px; }
 
-  /* Films déjà tirés, au-dessus du ticket : ils restent en place quand la
-     hauteur du ticket change. Titres coupés, épaisseur fixe pour que rien ne
-     se décale quand on passe de l'un à l'autre. */
-  .history { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); }
-  .history .link { display: inline-flex; align-items: baseline; gap: 5px; max-width: 24ch; color: var(--ink-2); text-decoration: none; }
-  .history .link .n { font: 400 17px/1 var(--px); }
-  .history .link .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  /* Films déjà tirés, au-dessus du ticket, sur une seule ligne toujours
+     réservée : ni son apparition ni le passage d'un film à l'autre ne
+     décalent le ticket. Le reste de l'historique s'ouvre par-dessus. */
+  .history { position: relative; display: flex; align-items: baseline; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+  .history.empty { visibility: hidden; }
+  .history-last { display: flex; flex: 1; gap: 16px; min-width: 0; overflow: hidden; }
+  .history-all { flex: none; }
+  .history-last .link, .history-panel .link { display: inline-flex; align-items: baseline; gap: 5px; min-width: 0; max-width: 24ch; color: var(--ink-2); text-decoration: none; }
+  .history-last .link:hover, .history-panel .link:hover { color: var(--red); }
+  /* Le dernier tiré garde son titre, les plus anciens se serrent */
+  .history-last .link:first-child { flex-shrink: 0; }
+  .history .n { font: 400 17px/1 var(--px); }
+  .history .t { overflow: hidden; text-overflow: ellipsis; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
   .history .link.current { color: var(--sec); }
   .history .link.current .t { text-decoration-thickness: 2px; }
+  .history-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 8px 22px;
+    max-height: min(320px, 50vh);
+    overflow-y: auto;
+    padding: 14px 16px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+  }
+  .history-panel .link { display: flex; max-width: none; }
 
   .blank { padding: 22px 0; border-bottom: 1px solid var(--rule); color: var(--ink-2); }
   .blank.error { color: var(--red); }
@@ -662,7 +684,12 @@
         <p id="findText"></p>
         <button class="btn" id="drawBtn" type="button">Tirer un film</button>
       </div>
-      <p class="history" id="history" hidden></p>
+      <div class="history empty" id="history">
+        <span>Déjà tirés</span>
+        <div class="history-last" id="historyLast"></div>
+        <button class="link history-all" id="historyAll" type="button" aria-expanded="false" hidden></button>
+        <div class="history-panel" id="historyPanel" hidden></div>
+      </div>
       <div id="stage"></div>
     </section>
 
@@ -1169,7 +1196,7 @@ async function draw(kind) {
 
     const entry = { film, n: ++state.counter };
     state.hist[kind].push(entry);
-    if (state.hist[kind].length > 8) state.hist[kind].shift();
+    if (state.hist[kind].length > HIST_MAX) state.hist[kind].shift();
     show(kind, entry);
   } catch (e) {
     stage.replaceChildren(el('p', 'blank error', kind === 'gems' ? 'Sélection indisponible.' : 'Tirage impossible.'));
@@ -1422,23 +1449,52 @@ function watchBlock(film, d, loaded) {
   return box;
 }
 
+// Les 5 derniers films tirés sur une ligne, tous les autres dans un panneau
+// posé par-dessus le ticket : l'historique ne pousse jamais la page.
+const HIST_SHOWN = 5;
+const HIST_MAX = 100;
+
 function renderHistory(kind) {
   if (kind !== state.source) return;
-  const box = $('history');
   const hist = state.hist[kind];
-  box.hidden = hist.length < 2;
+  $('history').classList.toggle('empty', !hist.length);
 
-  box.replaceChildren(el('span', null, 'Déjà tirés'));
-  for (const entry of [...hist].reverse()) {
+  const item = entry => {
     const name = entry.d ? entry.d.name : entry.film.name;
     const b = el('button', 'link' + (entry === state.current[kind] ? ' current' : ''));
     b.type = 'button';
     b.title = name;
     b.append(el('span', 'n', pad(entry.n)), el('span', 't', name));
-    b.addEventListener('click', () => show(kind, entry));
-    box.append(b);
-  }
+    b.addEventListener('click', () => {
+      closeHistory();
+      show(kind, entry);
+    });
+    return b;
+  };
+
+  const recent = [...hist].reverse();
+  $('historyLast').replaceChildren(...recent.slice(0, HIST_SHOWN).map(item));
+  $('historyPanel').replaceChildren(...recent.map(item));
+  $('historyAll').hidden = hist.length <= HIST_SHOWN;
+  $('historyAll').textContent = `Tout voir (${hist.length})`;
+  if (hist.length <= HIST_SHOWN) closeHistory();
 }
+
+function closeHistory() {
+  $('historyPanel').hidden = true;
+  $('historyAll').setAttribute('aria-expanded', 'false');
+}
+
+$('historyAll').addEventListener('click', () => {
+  const open = $('historyPanel').hidden;
+  $('historyPanel').hidden = !open;
+  $('historyAll').setAttribute('aria-expanded', String(open));
+});
+
+// Un clic en dehors de l'historique referme le panneau
+document.addEventListener('click', e => {
+  if (!e.target.closest('#history')) closeHistory();
+});
 
 // ---------- Choix en texte ----------
 function bindOpts(id, onChange) {
@@ -1892,6 +1948,7 @@ $('nextDuel').addEventListener('click', newDuel);
 // ---------- Clavier : Espace tire un film, ← → votent, Entrée passe au duel suivant ----------
 document.addEventListener('keydown', e => {
   if ($('site').hidden) return;
+  if (e.key === 'Escape') closeHistory();
 
   const target = e.target instanceof Element ? e.target : document.body;
   if (target.matches('input, textarea')) return;
