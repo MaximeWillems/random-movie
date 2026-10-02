@@ -51,11 +51,12 @@ peut être hébergé tel quel.
 ## Mise en ligne
 
 Le site est entièrement statique : il est publié tel quel depuis `public/` sur
-**Cloudflare Pages** (gratuit, sans mise en veille), redéployé à chaque push sur
-`main`.
+**Cloudflare**, en Worker qui sert les fichiers statiques (gratuit, sans mise en
+veille), redéployé à chaque push sur `main`.
 
-- Projet Pages relié au dépôt GitHub, sans commande de build, dossier de sortie `public`
-- Domaine personnalisé `seance404.pikilab.app`, ajouté depuis le projet Pages
+- Worker `seance404` relié au dépôt GitHub, sans commande de build, dossier `public`
+- Domaine `seance404.pikilab.app` ; l'ancien `random-movie.pikilab.app` y redirige (301)
+- Les adresses perdent leur `.html` (`/a-propos`), le serveur local fait de même
 - `public/_headers` : politique de sécurité (seules les polices Google, l'API et
   les images TMDB et la recherche Internet Archive sont permises) et cache
 - `public/404.html` : page des adresses inconnues
