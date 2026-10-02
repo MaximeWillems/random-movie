@@ -474,6 +474,27 @@
 
   .duel-foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 86px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
   .verdict { font-size: 17px; max-width: 60ch; }
+  .next { display: flex; align-items: center; gap: 14px; }
+
+  /* Décompte avant le duel suivant, comme l'amorce des vieilles bobines : deux
+     cercles, une croix, un secteur qui balaie le cadran à chaque seconde */
+  @property --sweep { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  .leader {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      linear-gradient(var(--ink), var(--ink)) center / 100% 1px no-repeat,
+      linear-gradient(var(--ink), var(--ink)) center / 1px 100% no-repeat,
+      conic-gradient(color-mix(in srgb, var(--ink) 42%, transparent) var(--sweep), transparent 0),
+      var(--paper-2);
+    box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 5px var(--paper-2), inset 0 0 0 6px var(--ink);
+    animation: sweep 1s linear infinite;
+  }
+  @keyframes sweep { to { --sweep: 360deg; } }
+  .leader span { position: relative; padding: 0 3px; background: var(--paper-2); font: 400 30px/0.9 var(--px); }
   .verdict strong { margin-right: 8px; font: 900 28px/1 var(--font); font-stretch: 62%; text-transform: uppercase; }
   .verdict.ko strong { color: var(--red); }
   .duel-level { padding-top: 12px; font-size: 14px; color: var(--ink-2); }
@@ -639,12 +660,16 @@
       <div id="duelGame" hidden>
         <div class="duel-q">
           <h2>Lequel a le plus de notes ?</h2>
-          <p id="tier"></p>
+          <!-- Palier de difficulté calculé mais pas montré au joueur -->
+          <p id="tier" hidden></p>
         </div>
         <div class="arena" id="arena"></div>
         <div class="duel-foot">
           <p class="verdict" id="verdict" aria-live="polite"></p>
-          <button class="btn" id="nextDuel" type="button" hidden>Duel suivant</button>
+          <div class="next" id="next" hidden>
+            <span class="leader" id="leader" aria-hidden="true"><span id="leaderN"></span></span>
+            <button class="btn" id="nextDuel" type="button">Duel suivant</button>
+          </div>
         </div>
         <!-- Niveau calculé mais pas montré au joueur -->
         <p class="duel-level" id="levelText" hidden></p>
@@ -1400,6 +1425,7 @@ function duelStatus(msg, error) {
 
 async function setSource(src) {
   duel.source = src;
+  stopCountdown();
   const token = ++duel.token;
   duel.pair = null;
   duel.recent = [];
@@ -1562,6 +1588,7 @@ function nextTier() {
 }
 
 function newDuel() {
+  stopCountdown();
   const [pair, tier] = pickPair(nextTier());
   if (!pair) {
     duelStatus('Pas assez de films pour un duel.', true);
@@ -1583,8 +1610,34 @@ function newDuel() {
 
   $('verdict').className = 'verdict';
   $('verdict').replaceChildren();
-  $('nextDuel').hidden = true;
+  $('next').hidden = true;
   renderScore();
+}
+
+// Le duel suivant arrive seul au bout de 10 secondes, sauf si on clique avant
+const COUNTDOWN = 10;
+let countdownTimer = null;
+
+function startCountdown() {
+  let n = COUNTDOWN;
+  $('leaderN').textContent = n;
+
+  // Relance le balayage pour le caler sur le premier chiffre
+  const leader = $('leader');
+  leader.style.animation = 'none';
+  void leader.offsetWidth;
+  leader.style.animation = '';
+
+  countdownTimer = setInterval(() => {
+    n--;
+    if (n > 0) $('leaderN').textContent = n;
+    else newDuel();
+  }, 1000);
+}
+
+function stopCountdown() {
+  clearInterval(countdownTimer);
+  countdownTimer = null;
 }
 
 function side(film, i, ink) {
@@ -1652,8 +1705,9 @@ function vote(choice) {
     document.createTextNode(`${duel.pair[win].name} a ${times} fois plus de notes que ${duel.pair[1 - win].name}.`),
   );
 
-  $('nextDuel').hidden = false;
+  $('next').hidden = false;
   $('nextDuel').focus({ preventScroll: true });
+  startCountdown();
   refresh();
 }
 
