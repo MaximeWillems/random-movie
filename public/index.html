@@ -949,8 +949,9 @@ async function connect(pseudo) {
     duel.seen = null;
     renderProfile();
 
-    // Un pseudo saisi, c'est d'abord sa watchlist qu'on veut voir
-    setFindSource('watchlist');
+    // On reste sur l'onglet et la source en cours : les choix liés au profil
+    // deviennent simplement disponibles
+    refresh();
   } catch (e) {
     pseudoError('Serveur injoignable.');
   } finally {
