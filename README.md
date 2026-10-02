@@ -2,104 +2,82 @@
 
 ![Séance 404](public/logo.svg)
 
-Deux onglets, à partir de Letterboxd :
+Deux salles, autour des films de Letterboxd :
 
-- **Trouver un film** — tire un film dans la watchlist publique d'un profil, ou
-  parmi des films très bien notés que presque personne n'a vus
-- **Duel** — deux films s'affrontent, il faut deviner lequel a le plus de notes
+- **Trouver un film** : tire un film dans ta watchlist, ou parmi des films très
+  bien notés que presque personne n'a vus
+- **Duel** : deux films s'affrontent, il faut deviner lequel a le plus de notes
 
 Le site suit le thème clair ou sombre du système ; le lien en haut à droite
 force l'un ou l'autre (choix gardé dans le `localStorage`, clé `lb-theme`).
 
-Les affiches viennent de Letterboxd (en 500 × 750, au lieu du 600 × 900
-d'origine), avec repli sur TMDB. Dans la fiche, l'affiche est posée dans le bloc
-de couleur, le texte coule autour ; dans le duel, chaque film est un ticket de
-cinéma, affiche en haut et talon de couleur en dessous.
+## Sources des données
+
+Le site ne lit **aucune page Letterboxd**.
+
+- **Films, résumés, genres, affiches** : API TMDB, appelée depuis le navigateur.
+  Mention « Ce site utilise l'API TMDB mais n'est ni approuvé ni certifié par
+  TMDB » et logo en pied de page, comme TMDB le demande.
+- **Où le voir** : offres légales connues de TMDB, fournies par JustWatch (cité
+  sous « Où le voir » et en pied de page), Belgique puis France ; copie libre de
+  droits sur Internet Archive ; recherche YouTube / Vimeo.
+- **Moyennes et nombres de notes Letterboxd** : relevés figés dans
+  `public/films.json` (août 2026) et `public/gems.json` (septembre 2026). Le mois
+  du relevé est affiché en petit sous les chiffres. Un film absent de ces deux
+  fichiers montre la moyenne et le nombre de votes TMDB, marqués « TMDB ».
+- **Profil** : l'export que le membre fait lui-même sur Letterboxd
+  (*Settings → Import & Export → Export your data*). Le ZIP est lu dans le
+  navigateur (lecteur de ZIP intégré, sans bibliothèque) et n'est envoyé nulle
+  part. Il donne les films vus, la watchlist et les notes.
+
+Séance 404 n'est pas affilié à Letterboxd.
 
 ## Prérequis
 
-- [Node.js](https://nodejs.org/) v18 ou plus récent (`fetch` natif)
+- [Node.js](https://nodejs.org/) v18 ou plus récent, seulement pour le serveur
+  local et le script des affiches
 
-## Installation & lancement
+## Lancement en local
 
 ```bash
-# 1. Installer les dépendances (une seule fois)
 npm install
-
-# 2. Lancer le serveur
 npm start
 # → Serveur lancé → http://localhost:3000
 ```
 
-Puis ouvrir http://localhost:3000
+`server.js` ne fait que servir `public/` : le site est entièrement statique et
+peut être hébergé tel quel.
 
 ## Utilisation
 
-Le pseudo Letterboxd se saisit une fois, en haut de la page. Il charge la
-watchlist, débloque les sources liées au profil et écarte les films déjà vus.
+L'export Letterboxd s'importe une fois, en haut de la page (« Importer mon
+export »). Il est gardé dans le navigateur (`localStorage`, clé `lb-find`),
+débloque les sources liées au profil et écarte les films déjà vus. « mettre à
+jour » réimporte un export plus récent, « retirer » l'efface.
 
 ### Trouver un film
 
 Deux sources, chacune garde son film et son historique :
 
-- **ma watchlist** — un film tiré dans la watchlist (pseudo requis)
-- **les films peu connus** — la source par défaut sans pseudo, voir plus bas
+- **ma watchlist** : un film tiré dans la watchlist de l'export. Les films sans
+  année ou d'une année à venir sont écartés, et pour l'année en cours et la
+  précédente TMDB dit si le film est sorti. Les films de l'année sortent moins
+  souvent (poids 0,4), au cas où ils ne seraient sortis qu'aux États-Unis
+- **les films peu connus** : voir plus bas
 
-La fiche combine la page Letterboxd (moyenne, nombre de notes, durée,
-réalisation, affiche, via `/api/film/:slug`) et TMDB (genres, synopsis en
-français, offres de streaming). Les films déjà tirés restent accessibles en bas
-de la fiche.
+Seul le bouton « Tirer un film » (ou Espace) lance un tirage. Les 5 derniers
+films tirés sont au-dessus du ticket, « Tout voir » ouvre les autres (jusqu'à
+100 par source). Les recherches survivent à un rechargement.
 
 ### Films peu connus
 
-La source **les films peu connus** tire un film peu connu
-mais bien noté : **moins de 5 000 notes sur Letterboxd et au moins 3/5, ou moins
-de 20 000 notes pour les films à 4/5 et plus**, sortis il y a plus de deux ans (un film récent
-a peu de notes parce qu'il est récent, pas parce qu'il est méconnu). Letterboxd bloque le nombre de
-vues, c'est donc le nombre de notes qui sert de mesure. Le plafond est plus haut
-pour les films à 4/5 parce que Letterboxd tire la moyenne des films peu notés
-vers la moyenne générale : sous 5 000 notes, aucun des 81 premiers films trouvés
-n'atteignait 4/5.
-Le tirage favorise les mieux notés : un film à 4/5 sort 9 fois plus souvent
-qu'un film à 3/5, un film à 4,5/5 27 fois plus.
+Des films peu connus mais bien notés : **moins de 5 000 notes sur Letterboxd et
+au moins 3/5, ou moins de 20 000 notes pour les films à 4/5 et plus**, sortis il
+y a plus de deux ans. La liste, figée dans `public/gems.json`, vient de listes
+Letterboxd de niche (réalisatrices, un pays, un genre…). Le tirage favorise les
+mieux notés : un film à 4/5 sort 9 fois plus souvent qu'un film à 3/5.
 
-- **Pseudo facultatif** : s'il est renseigné, les films déjà vus sont écartés.
-  La vérification se fait film par film via `/{user}/film/{slug}/`, qui répond
-  200 si le membre l'a vu et 404 sinon (y compris s'il est seulement dans sa
-  watchlist)
-- **Où le voir** : liens légaux uniquement — offres connues de TMDB (données
-  JustWatch, Belgique puis France), copie libre de droits sur Internet Archive
-  (même titre, même année, licence déclarée), et recherche YouTube / Vimeo,
-  où les réalisateurs publient souvent eux-mêmes leurs courts métrages
-
-La sélection vient de `public/gems.json`, construit à l'avance à partir de
-**listes Letterboxd de niche** (réalisatrices, un pays, un genre…) : leurs films
-les mieux notés sont souvent excellents et peu vus.
-
-```bash
-node scripts/find-lists.js
-node scripts/build-gems.js
-```
-
-1. `find-lists.js` repère des listes candidates et note chaque liste d'au moins
-   100 films sur 10 films répartis dans ses 100 mieux notés. Les plus
-   prometteuses sont ajoutées à `scripts/gem-lists.txt`
-2. `build-gems.js` lit les 100 films les mieux notés de chaque nouvelle liste de
-   `scripts/gem-lists.txt` et garde ceux qui passent les critères
-
-On peut aussi coller à la main l'adresse d'une liste dans `scripts/gem-lists.txt`.
-
-La recherche de listes est bloquée par Letterboxd : les candidates viennent des
-listes officielles et des listes qui contiennent nos meilleurs films. Seule la
-première page du tri par note est lisible, soit 100 films par liste, ce qui
-suffit puisque les films à 4/5 sont en haut. Sur la liste des réalisatrices, ces
-100 films en ont donné 23, dont 22 à 4/5 ou plus. L'ancienne exploration de
-proche en proche (filmographies, films similaires) n'en avait trouvé aucun à 4/5
-en plusieurs centaines de films : elle a été retirée.
-
-Les listes lues et les films déjà testés sont gardés dans
-`scripts/.gems-state.json` (non versionné) : relancer ne traite que les nouvelles
-listes.
+Avec un export importé, les films déjà vus sont écartés (titre et année).
 
 ### Mode duel
 
@@ -171,77 +149,36 @@ quelques fois sur soixante avec une centaine de films.
 
 Trois sources au choix :
 
-- **populaires** — le pool pré-calculé de `public/films.json`
-- **que j'ai vus** — une centaine de films vus (voir la limite plus bas)
-- **de ma watchlist** — la watchlist complète, donc un pool plus large
+- **populaires** : le pool figé de `public/films.json`
+- **que j'ai vus** : les films vus de l'export qui sont dans ce pool
+- **de ma watchlist** : les films de la watchlist qui sont dans ce pool
 
-Pour les deux sources liées à un profil, les films déjà présents dans le pool
-sont jouables immédiatement ; les autres se chargent en tâche de fond pendant
-que tu joues.
+Seuls les films du pool ont un nombre de notes relevé : c'est donc lui qui
+borne les deux sources liées au profil.
+
+Après chaque vote, un décompte de 10 secondes dans le bouton « Duel suivant »
+enchaîne seul. Le duel en cours et la série survivent à un rechargement.
 
 Au clavier : **Espace** tire un film, **←** / **→** votent pendant un duel, **Entrée** passe au suivant.
 
-## Le pool de films
+## Affiches
 
-Le mode duel s'appuie sur `public/films.json` : une liste de films avec leur
-nombre de notes, triée du plus populaire au moins populaire. Le fichier est
-versionné, il n'y a donc rien à faire pour jouer.
-
-Pour le régénérer ou l'agrandir :
+`scripts/tmdb-posters.js` ajoute à `films.json` et `gems.json` l'identifiant et
+le chemin d'affiche TMDB de chaque film (titre identique, année à un an près) :
 
 ```bash
-node scripts/build-pool.js 500
+node scripts/tmdb-posters.js
 ```
-
-Le script est throttlé (~2,5 s entre deux films) — compter une vingtaine de
-minutes pour 500 films. Il reprend là où il s'était arrêté : les liens encore à
-explorer sont gardés dans `scripts/.crawl-frontier.json` (non versionné), donc
-relancer avec un objectif plus haut complète le fichier au lieu de le refaire
-de zéro.
 
 ## Comment ça marche
 
-- **Backend** (`server.js`) : Express scrape les pages HTML publiques de Letterboxd
-- **Frontend** (`public/index.html`) : tout est dans ce fichier — vues, styles, logique
-- Pas de clé API Letterboxd nécessaire
-
-La popularité vient du bloc JSON-LD présent sur chaque page `/film/{slug}/`,
-qui expose `ratingCount` (le nombre de notes), la note moyenne et le poster.
-Le mode duel n'utilise donc pas TMDB du tout.
-
-### Ce que Letterboxd laisse passer
-
-Une partie du site est protégée par Cloudflare et répond **403** au scraping,
-ce qui contraint pas mal l'architecture :
-
-| Route | État |
-|---|---|
-| `/{user}/watchlist/page/N/` | ✅ accessible, paginable |
-| `/film/{slug}/` | ✅ accessible (titre, année, poster, `ratingCount`) |
-| `/{user}/rss/` | ✅ accessible (50 derniers visionnages) |
-| `/{user}/films/` | ✅ accessible — **mais première page seulement** (72 films) |
-| `/{user}/films/page/N/` | ❌ 403, y compris `page/1` |
-| `/films/popular/` | ❌ 403 |
-| `/{user}/films/diary/`, `/{user}/likes/films/` | ❌ 403 |
-| `/csi/film/{slug}/stats/` | ❌ 403 |
-
-Le cas de `/films/` est le plus surprenant : l'URL nue passe, la forme paginée
-non — y compris `page/1`, qui affiche pourtant la même chose. D'où la limite
-sur les films vus.
-
-C'est pour ça que le pool est construit hors ligne par `scripts/build-pool.js` :
-faute de pouvoir lire `/films/popular/`, le script part d'une liste de films
-connus et suit les « films similaires » de page en page.
+- **Tout est dans `public/index.html`** : vues, styles, logique
+- Appels réseau : `films.json`, `gems.json` et l'API TMDB, rien d'autre
 
 ## Limites
 
-- Le profil doit être **public** sur Letterboxd
-- La watchlist est rechargée à chaque fois (pas de cache côté navigateur)
-- ~250 ms entre chaque page pour ne pas surcharger Letterboxd
+- Les chiffres Letterboxd sont figés au mois du relevé
+- Le profil n'est connu qu'au moment de l'export : refaire l'export de temps en
+  temps pour que les films vus récemment soient écartés
 - Les films en dessous de 3 000 notes sont écartés des duels (deviner entre
   400 et 600 notes tiendrait du pile ou face)
-- **Films vus : une centaine au maximum**, pas l'historique complet. La
-  pagination de `/{user}/films/` étant bloquée, `/api/seen/:username` combine
-  la première page (72 films, triés par date de sortie) et le flux RSS (50
-  derniers visionnages, qui ramène des films plus anciens). Pour un pool plus
-  large, utiliser la source watchlist.
