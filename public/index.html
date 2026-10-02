@@ -118,6 +118,7 @@
   }
   /* Logo en SVG, utilisé comme masque : il prend la couleur du thème */
   .logo {
+    display: block;
     width: 380px;
     max-width: 100%;
     aspect-ratio: 1693 / 247;
@@ -477,6 +478,12 @@
   .verdict.ko strong { color: var(--red); }
   .duel-level { padding-top: 12px; font-size: 14px; color: var(--ink-2); }
 
+  /* ---------- Accueil ---------- */
+  .home .ticket { margin-top: 34px; }
+  .home .film-title { font-size: clamp(38px, 5.6vw, 70px); }
+  .home .film-meta { max-width: 52ch; }
+  .home .btn { display: inline-block; margin-top: 26px; text-decoration: none; }
+
   /* ---------- Mobile ---------- */
   @media (max-width: 720px) {
     .app { padding: 0 18px 32px; }
@@ -511,9 +518,29 @@
     <button class="link" id="themeToggle" type="button"></button>
   </div>
 
+  <!-- Accueil : rien n'est tiré tant qu'on n'est pas entré dans la découverte -->
+  <section class="home" id="home">
+    <header class="mast">
+      <h1 class="logo"><span class="visually-hidden">Séance 404</span></h1>
+    </header>
+    <div class="ticket" style="--c: var(--t-bleu)">
+      <dl class="stub">
+        <div class="field big"><dt>Séance</dt><dd>404</dd></div>
+      </dl>
+      <div class="ticket-main no-poster">
+        <div>
+          <h2 class="film-title narrow">Des films peu connus, tirés au hasard</h2>
+          <p class="film-meta">Bien notés sur Letterboxd, avec où les voir. Et un duel : lequel de deux films a le plus de notes ?</p>
+          <a class="btn" href="#decouvrir">Tirer un film</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="site" hidden>
   <header class="mast">
     <div>
-      <h1 class="logo"><span class="visually-hidden">Séance 404</span></h1>
+      <h1><a class="logo" href="#"><span class="visually-hidden">Séance 404, accueil</span></a></h1>
     </div>
     <div>
       <form class="pseudo" id="pseudoForm" autocomplete="off">
@@ -601,6 +628,7 @@
       </div>
     </section>
   </main>
+  </div>
 </div>
 
 <script>
@@ -1632,6 +1660,8 @@ $('nextDuel').addEventListener('click', newDuel);
 
 // ---------- Clavier : Espace tire un film, ← → votent, Entrée passe au duel suivant ----------
 document.addEventListener('keydown', e => {
+  if ($('site').hidden) return;
+
   const target = e.target instanceof Element ? e.target : document.body;
   if (target.matches('input, textarea')) return;
   const onButton = target.closest('button, a');
@@ -1656,12 +1686,22 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ---------- Accueil ou découverte, selon l'adresse ----------
+// Le premier film n'est tiré qu'à l'entrée dans la découverte, jamais sur l'accueil.
+function route() {
+  const home = location.hash !== '#decouvrir';
+  $('home').hidden = !home;
+  $('site').hidden = home;
+  if (!home && state.tab === 'find' && !state.current[state.source]) draw(state.source);
+}
+window.addEventListener('hashchange', route);
+
 // ---------- Démarrage ----------
 renderThemeToggle();
 renderProfile();
 refresh();
 renderScore();
-draw('gems');
+route();
 </script>
 </body>
 </html>
