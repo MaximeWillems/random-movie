@@ -413,7 +413,9 @@
   }
   .side:last-child { border-left: 2px solid var(--ink); }
   .side:hover { box-shadow: inset 0 0 0 5px var(--ink); }
-  .side-photo { position: relative; height: 230px; background: var(--paper-2); }
+  /* Affiche et titre suivent la hauteur de l'écran : le duel entier doit tenir
+     sur un écran de portable sans faire défiler */
+  .side-photo { position: relative; height: clamp(140px, 24vh, 230px); background: var(--paper-2); }
   .side-photo img {
     position: absolute;
     inset: 0;
@@ -429,12 +431,12 @@
     flex: 1;
     flex-direction: column;
     min-width: 0;
-    min-height: 210px;
+    min-height: clamp(150px, 22vh, 210px);
     padding: 22px 22px 20px;
   }
   .side-title {
     display: block;
-    font-size: clamp(28px, 4.6vw, 56px);
+    font-size: clamp(28px, min(4.6vw, 6vh), 56px);
     line-height: 0.88;
     overflow-wrap: anywhere;
     text-wrap: balance;
@@ -507,6 +509,24 @@
   .room .synopsis { margin-bottom: 22px; }
   .room .btn { margin-top: auto; background: var(--cream); color: var(--night); text-decoration: none; }
   .room .btn:hover, .room .btn:focus-visible { background: var(--night); color: var(--cream); }
+
+  /* ---------- Écrans peu hauts (portables) : marges resserrées ---------- */
+  @media (max-height: 820px) {
+    .topbar { padding-top: 6px; }
+    .mast { padding: 2px 0 10px; }
+    .logo { width: 320px; }
+    .opts { padding: 10px 0; }
+    .intro { padding: 12px 0; }
+    .film { padding-top: 16px; }
+    .duel-top { padding: 10px 0; }
+    .duel-q { padding: 14px 0 10px; }
+    .duel-q h2 { font-size: 21px; }
+    .side-text { padding: 16px 20px 14px; }
+    .side-year { margin-top: 6px; }
+    .side-result { padding-top: 12px; }
+    .side-result .n { font-size: 34px; }
+    .duel-foot { min-height: 0; padding: 12px 0; }
+  }
 
   /* ---------- Mobile ---------- */
   @media (max-width: 720px) {
