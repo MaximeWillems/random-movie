@@ -16,7 +16,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Jersey+10&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   [hidden] { display: none !important; }
@@ -35,16 +35,25 @@
 
     /* Encres d'imprimerie, en aplat */
     --vermillon: #ec4f2c;
-    --rose: #f07fb0;
     --jaune: #f4c430;
-    --vert: #1e8a5a;
-    --sarcelle: #0e7a85;
     --bleu: #2e4ea1;
     --prune: #683e7c;
+
+    /* Couleurs des tickets, les mêmes dans les deux thèmes */
+    --t-bleu: #2e4ea1;
+    --t-framboise: #9b2f5e;
+    --t-sapin: #1f5c46;
+    --t-citron: #efd145;
+    --t-prune: #683e7c;
+    --t-petrole: #165e6b;
+    --carmin: #931a1a;
+    --stub: 170px;
 
     --red: var(--vermillon);
     --sec: var(--vermillon);
     --font: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    /* Police pixel des chiffres : tirage, moyenne, nombre de notes */
+    --px: 'Jersey 10', 'Courier New', monospace;
     color-scheme: light;
   }
 
@@ -58,10 +67,7 @@
       --ink-3: #6d6870;
       --rule: #38343f;
       --vermillon: #f0603c;
-      --rose: #f28bb8;
       --jaune: #f2c94c;
-      --vert: #2ea672;
-      --sarcelle: #1b98a3;
       --bleu: #4f73d6;
       --prune: #8d5fa8;
       color-scheme: dark;
@@ -75,10 +81,7 @@
     --ink-3: #6d6870;
     --rule: #38343f;
     --vermillon: #f0603c;
-    --rose: #f28bb8;
     --jaune: #f2c94c;
-    --vert: #2ea672;
-    --sarcelle: #1b98a3;
     --bleu: #4f73d6;
     --prune: #8d5fa8;
     color-scheme: dark;
@@ -113,18 +116,15 @@
     padding: 10px 0 14px;
     border-bottom: 4px solid var(--ink);
   }
-  /* Logo en SVG, utilisé comme masque : il prend la couleur du thème. La copie
-     rose décalée imite un calage d'impression à deux passages. */
-  .logo { position: relative; width: 380px; max-width: 100%; aspect-ratio: 1693 / 247; }
-  .logo::before, .logo::after {
-    content: '';
-    position: absolute;
-    inset: 0;
+  /* Logo en SVG, utilisé comme masque : il prend la couleur du thème */
+  .logo {
+    width: 380px;
+    max-width: 100%;
+    aspect-ratio: 1693 / 247;
+    background: var(--ink);
     -webkit-mask: url(logo.svg) center / contain no-repeat;
     mask: url(logo.svg) center / contain no-repeat;
   }
-  .logo::before { background: var(--rose); transform: translate(3px, 2px); }
-  .logo::after { background: var(--ink); }
   .visually-hidden {
     position: absolute;
     width: 1px;
@@ -197,7 +197,10 @@
   .tab-n { margin-left: 7px; font-weight: 400; opacity: 0.65; text-transform: none; }
 
   /* ---------- Boutons et liens ---------- */
+  /* Coins en escalier, comme dessinés au pixel. La découpe rognerait le contour
+     de focus : le focus prend l'aspect du survol. */
   .btn {
+    --s: 4px;
     padding: 13px 22px 12px;
     background: var(--sec);
     color: var(--cream);
@@ -209,10 +212,16 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
     cursor: pointer;
+    clip-path: polygon(
+      0 calc(var(--s) * 2), var(--s) calc(var(--s) * 2), var(--s) var(--s), calc(var(--s) * 2) var(--s), calc(var(--s) * 2) 0,
+      calc(100% - var(--s) * 2) 0, calc(100% - var(--s) * 2) var(--s), calc(100% - var(--s)) var(--s), calc(100% - var(--s)) calc(var(--s) * 2), 100% calc(var(--s) * 2),
+      100% calc(100% - var(--s) * 2), calc(100% - var(--s)) calc(100% - var(--s) * 2), calc(100% - var(--s)) calc(100% - var(--s)), calc(100% - var(--s) * 2) calc(100% - var(--s)), calc(100% - var(--s) * 2) 100%,
+      calc(var(--s) * 2) 100%, calc(var(--s) * 2) calc(100% - var(--s)), var(--s) calc(100% - var(--s)), var(--s) calc(100% - var(--s) * 2), 0 calc(100% - var(--s) * 2)
+    );
   }
-  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn:hover, .btn:focus-visible { background: var(--ink); color: var(--paper); }
   .btn:disabled { background: var(--ink-3); color: var(--paper); cursor: wait; }
-  .btn-sm { padding: 7px 13px 6px; font-size: 13px; }
+  .btn-sm { --s: 3px; padding: 7px 13px 6px; font-size: 13px; }
   .link {
     padding: 0;
     background: none;
@@ -265,33 +274,51 @@
   .opts-note { color: var(--ink-2); font-size: 14px; }
 
   /* ---------- Film tiré ---------- */
-  .film { padding-top: 26px; }
+  .film { padding-top: 22px; }
 
-  /* Le film est imprimé sur un aplat de sa couleur, l'affiche habillée par le texte */
-  .film-head {
-    display: flow-root;
-    padding: 22px 30px 26px;
+  /* Le film est un ticket de séance : le talon porte les chiffres en pixel, la
+     partie principale le titre, la description et l'affiche. Deux encoches
+     rondes marquent la séparation. */
+  .ticket {
+    display: grid;
+    grid-template-columns: var(--stub) minmax(0, 1fr);
     background: var(--c);
     color: var(--cream);
     transition: background 0.08s;
+    -webkit-mask: radial-gradient(circle 11px at var(--stub) 0, transparent 10px, #000 11px) top / 100% 51% no-repeat,
+                  radial-gradient(circle 11px at var(--stub) 100%, transparent 10px, #000 11px) bottom / 100% 51% no-repeat;
+    mask: radial-gradient(circle 11px at var(--stub) 0, transparent 10px, #000 11px) top / 100% 51% no-repeat,
+          radial-gradient(circle 11px at var(--stub) 100%, transparent 10px, #000 11px) bottom / 100% 51% no-repeat;
   }
-  .film-head.light, .side.light { color: var(--night); }
+  .ticket.light, .side.light { color: var(--night); }
+
+  .stub {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 14px;
+    border-right: 2px solid color-mix(in srgb, currentColor 55%, transparent);
+    text-align: center;
+  }
+  .field dt { font: 700 10px var(--font); letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
+  .field dd { font: 400 40px/0.9 var(--px); letter-spacing: 0.03em; }
+  .field dd small { margin-left: 2px; font-size: 20px; opacity: 0.7; }
+  .field dd.wait { opacity: 0.5; }
+  .field.big dd { font-size: 68px; color: var(--jaune); }
+  .ticket.light .field.big dd { color: var(--carmin); }
+  .field.text dd { padding-top: 3px; font: 600 14px/1.35 var(--font); letter-spacing: 0; }
+
+  .ticket-main { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 24px; align-items: start; padding: 22px 24px 24px; }
+  .ticket-main.no-poster { grid-template-columns: minmax(0, 1fr); }
   .film-poster {
-    float: right;
-    width: 210px;
+    display: block;
+    width: 100%;
     aspect-ratio: 2 / 3;
-    margin: 0 0 8px 28px;
     border: 2px solid var(--night);
     background: rgba(0, 0, 0, 0.14);
     object-fit: cover;
-  }
-  .side-photo img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: filter 0.25s, opacity 0.2s;
   }
   .stamp {
     display: inline-block;
@@ -305,39 +332,33 @@
     transform: rotate(-4deg);
   }
   .film-title {
-    margin-top: 14px;
-    font-size: clamp(44px, 8.5vw, 108px);
-    line-height: 0.86;
-    letter-spacing: -0.012em;
+    font-size: clamp(34px, 4.6vw, 58px);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
     overflow-wrap: anywhere;
     text-wrap: balance;
   }
-  .film.flicker .film-rest, .film.flicker .film-poster { opacity: 0.25; }
-  .film-rest, .film-poster { transition: opacity 0.2s; }
-  .film-meta { margin-top: 16px; font-size: 18px; font-weight: 500; }
-
-  .facts {
-    display: grid;
-    grid-template-columns: auto auto 1fr;
-    border-bottom: 1px solid var(--ink);
+  .film-meta { margin-top: 10px; font-size: 15px; font-weight: 500; }
+  .synopsis {
+    max-width: 64ch;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+    font-size: 14.5px;
+    line-height: 1.55;
   }
-  .facts > div { padding: 10px 26px 12px 0; }
-  .facts > div + div { padding-left: 18px; border-left: 1px solid var(--rule); }
-  .facts dt { font-size: 13px; color: var(--ink-2); }
-  .facts dd { font: 700 32px/1.1 var(--font); font-stretch: 75%; font-variant-numeric: tabular-nums; }
-  .facts dd span { margin-left: 2px; font-weight: 400; font-size: 17px; color: var(--ink-2); }
-  .facts dd.text { padding-top: 6px; font: 500 16px/1.35 var(--font); }
-  .facts dd.wait { color: var(--ink-3); }
-
-  .film-cols { display: grid; grid-template-columns: 1.45fr 1fr; }
-  .synopsis { max-width: 60ch; padding: 18px 30px 22px 0; font-size: 16.5px; line-height: 1.6; }
   .synopsis:empty { display: none; }
-  .watch { padding: 18px 0 22px 24px; border-left: 1px solid var(--rule); }
-  .watch-title { margin-bottom: 6px; font: 700 13px var(--font); text-transform: uppercase; letter-spacing: 0.06em; }
-  .watch-none { margin-bottom: 4px; font-size: 14px; color: var(--ink-2); }
+  .film.flicker :is(.stub, .film-meta, .synopsis, .film-poster, .watch) { opacity: 0.25; }
+  .stub, .film-meta, .synopsis, .film-poster, .watch { transition: opacity 0.2s; }
+
+  /* Où le voir, sous le ticket, aligné sur ses deux parties */
+  .watch { display: grid; grid-template-columns: var(--stub) minmax(0, 1fr); padding: 18px 0 20px; }
+  .watch-head { padding-right: 24px; }
+  .watch-title { font: 700 13px var(--font); text-transform: uppercase; letter-spacing: 0.06em; }
+  .watch-none { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
 
   /* Points de conduite, comme sur un programme */
-  .leaders { list-style: none; }
+  .leaders { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 0 40px; padding-left: 24px; list-style: none; }
   .leaders a { display: flex; align-items: baseline; gap: 6px; padding: 4px 0; color: inherit; text-decoration: none; }
   .leaders .dots { flex: 1; min-width: 16px; border-bottom: 1px dotted var(--ink-3); transform: translateY(-5px); }
   .leaders .what { font-size: 14px; color: var(--ink-2); white-space: nowrap; }
@@ -392,7 +413,15 @@
   .side:last-child { border-left: 2px solid var(--ink); }
   .side:hover { box-shadow: inset 0 0 0 5px var(--ink); }
   .side-photo { position: relative; height: 230px; background: var(--paper-2); }
-  .side-photo img { object-position: 50% 25%; }
+  .side-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 25%;
+    transition: filter 0.25s, opacity 0.2s;
+  }
   .side-text {
     position: relative;
     display: flex;
@@ -411,7 +440,7 @@
   }
   .side-year { display: block; margin-top: 10px; font-size: 16px; font-weight: 500; }
   .side-result { margin-top: auto; padding-top: 22px; visibility: hidden; }
-  .side-result .n { font: 800 34px/1 var(--font); font-stretch: 70%; font-variant-numeric: tabular-nums; }
+  .side-result .n { font: 400 42px/0.9 var(--px); letter-spacing: 0.03em; }
   .side-result .unit { margin-left: 6px; font-size: 15px; }
 
   /* Tampons posés après le vote, en bas à droite */
@@ -455,21 +484,19 @@
     .mast > div:last-child, .pseudo-row, .pseudo input { width: 100%; }
     .tab { padding: 10px 11px 9px; font-size: 14px; }
     .intro .btn { width: 100%; }
-    .facts { grid-template-columns: 1fr 1fr; }
-    .facts > div:nth-child(3) { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--rule); }
-    .film-cols { grid-template-columns: 1fr; }
-    .synopsis { padding-right: 0; }
-    .watch { padding: 16px 0 20px; border-left: 0; border-top: 1px solid var(--rule); }
-    .film-head { padding: 18px 18px 22px; }
-    .film-poster { width: 96px; margin-left: 14px; }
-    .film-title { font-size: clamp(36px, 11vw, 56px); }
+    .ticket { grid-template-columns: 1fr; -webkit-mask: none; mask: none; }
+    .stub { flex-direction: row; flex-wrap: wrap; justify-content: space-around; gap: 12px 20px; border-right: 0; border-bottom: 2px solid color-mix(in srgb, currentColor 55%, transparent); }
+    .ticket-main { grid-template-columns: minmax(0, 1fr) 96px; gap: 14px; padding: 18px; }
+    .film-title { font-size: clamp(30px, 9vw, 44px); }
+    .watch { grid-template-columns: 1fr; gap: 8px; }
+    .leaders { grid-template-columns: 1fr; padding-left: 0; }
     .member { align-items: flex-start; }
 
     .side-photo { height: 150px; }
     .side-text { padding: 18px 12px 14px; min-height: 190px; }
     .side .stamp { right: 8px; bottom: 12px; font-size: 11px; padding: 3px 7px 2px; }
     .side .stamp-pick { bottom: 46px; }
-    .side-result .n { font-size: 24px; }
+    .side-result .n { font-size: 30px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -607,18 +634,19 @@ function hash(str) {
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
   .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-// Encres d'impression : chaque film reçoit toujours la même, d'après son identifiant.
-// Sur les encres claires, le texte est imprimé en foncé.
+// Couleurs des tickets. Chaque tirage prend la suivante, pour que deux films
+// d'affilée n'aient jamais la même ; au duel, chaque film a toujours la sienne,
+// d'après son identifiant. Sur le citron, le texte est imprimé en foncé.
 const PALETTE = [
-  { c: 'var(--vermillon)', light: false },
-  { c: 'var(--rose)', light: true },
-  { c: 'var(--jaune)', light: true },
-  { c: 'var(--vert)', light: false },
-  { c: 'var(--sarcelle)', light: false },
-  { c: 'var(--bleu)', light: false },
-  { c: 'var(--prune)', light: false },
+  { c: 'var(--t-bleu)', light: false },
+  { c: 'var(--t-framboise)', light: false },
+  { c: 'var(--t-sapin)', light: false },
+  { c: 'var(--t-citron)', light: true },
+  { c: 'var(--t-prune)', light: false },
+  { c: 'var(--t-petrole)', light: false },
 ];
 const inkIndex = slug => hash(slug) % PALETTE.length;
+const inkOfDraw = n => PALETTE[(n - 1) % PALETTE.length];
 
 function paint(node, ink) {
   node.style.setProperty('--c', ink.c);
@@ -910,7 +938,7 @@ async function pickGem(pool) {
 // moins huit fois.
 function flicker(block, pool) {
   block.classList.add('flicker');
-  const head = block.querySelector('.film-head');
+  const ticket = block.querySelector('.ticket');
   const title = block.querySelector('.film-title');
   let running = true;
   let frames = 0;
@@ -918,7 +946,7 @@ function flicker(block, pool) {
     while (running || frames < 8) {
       const other = pool[Math.floor(Math.random() * pool.length)];
       title.textContent = other.name;
-      paint(head, PALETTE[(inkIndex(other.slug) + frames) % PALETTE.length]);
+      paint(ticket, PALETTE[frames % PALETTE.length]);
       frames++;
       await sleep(50 + Math.min(frames, 8) * 9);
     }
@@ -1113,47 +1141,55 @@ function filmBlock(entry) {
   const name = d.name || f.name;
   const box = el('article', 'film');
 
-  // Aplat de couleur : affiche, numéro de tirage, titre, année, durée, réalisation
+  const ticket = el('div', 'ticket');
+  paint(ticket, inkOfDraw(entry.n));
+
+  // Talon : numéro de tirage, moyenne, nombre de notes, genres
+  const rating = d.rating ?? f.rating;
+  const count = d.ratingCount ?? f.ratingCount;
+  const waiting = loaded ? '—' : '…';
+  const stub = el('dl', 'stub');
+  const field = (label, value, cls, unit) => {
+    const div = el('div', 'field' + (cls ? ' ' + cls : ''));
+    const dd = el('dd', value === waiting ? 'wait' : null, value);
+    if (unit) dd.append(el('small', null, unit));
+    div.append(el('dt', null, label), dd);
+    stub.append(div);
+  };
+  field('Tirage', pad(entry.n), 'big');
+  field('Moyenne', rating != null ? fmtRating(rating) : waiting, null, rating != null ? '/5' : null);
+  field('Notes', count != null ? num(count) : waiting);
+  field('Genres', d.genres && d.genres.length ? d.genres.join(', ') : waiting, 'text');
+
+  // Partie principale : titre, année, durée, réalisation et description, l'affiche à droite
   const runtime = d.runtime || f.runtime;
   const directors = (d.directors && d.directors.length ? d.directors : f.directors) || [];
   const length = runtime ? fmtRuntime(runtime) + (runtime <= 40 ? ', court métrage' : '') : '';
   const meta = [d.year || f.year, length, directors.slice(0, 2).join(', ')].filter(Boolean).join(' — ');
 
-  const head = el('div', 'film-head');
-  paint(head, PALETTE[inkIndex(f.slug)]);
-
-  // Place de l'affiche gardée vide le temps qu'elle arrive
-  const poster = d.poster || posterUrl(f.poster, '0-500-0-750');
-  if (poster) head.append(posterImg(poster, 'film-poster', name));
-  else if (!loaded) head.append(el('div', 'film-poster'));
-  head.append(
-    el('span', 'stamp', 'Tirage N° ' + pad(entry.n)),
+  const main = el('div', 'ticket-main');
+  const text = el('div');
+  text.append(
     el('h3', 'film-title narrow', name),
     el('p', 'film-meta', meta),
+    el('p', 'synopsis', d.overview || ''),
   );
-  box.append(head);
+  main.append(text);
 
-  // Moyenne, nombre de notes, genres
-  const rating = d.rating ?? f.rating;
-  const count = d.ratingCount ?? f.ratingCount;
-  const facts = el('dl', 'facts');
-  const fact = (label, value, unit, cls) => {
-    const div = el('div');
-    const dd = el('dd', cls, value);
-    if (unit) dd.append(el('span', null, unit));
-    div.append(el('dt', null, label), dd);
-    facts.append(div);
-  };
-  const waiting = loaded ? '—' : '…';
-  fact('Moyenne Letterboxd', rating != null ? fmtRating(rating) : waiting, rating != null ? '/5' : null, rating != null ? '' : 'wait');
-  fact('Notes', count != null ? num(count) : waiting, null, count != null ? '' : 'wait');
-  fact('Genres', d.genres && d.genres.length ? d.genres.join(', ') : waiting, null, 'text');
+  // Place de l'affiche gardée vide le temps qu'elle arrive ; sans affiche, le texte prend toute la largeur
+  const poster = d.poster || posterUrl(f.poster, '0-500-0-750');
+  if (poster) {
+    const img = posterImg(poster, 'film-poster', name);
+    img.addEventListener('error', () => main.classList.add('no-poster'));
+    main.append(img);
+  } else if (!loaded) {
+    main.append(el('div', 'film-poster'));
+  } else {
+    main.classList.add('no-poster');
+  }
 
-  const rest = el('div', 'film-rest');
-  const cols = el('div', 'film-cols');
-  cols.append(el('p', 'synopsis', d.overview || ''), watchBlock(f, d, loaded));
-  rest.append(facts, cols);
-  box.append(rest);
+  ticket.append(stub, main);
+  box.append(ticket, watchBlock(f, d, loaded));
   return box;
 }
 
@@ -1169,11 +1205,13 @@ function leader(name, what, href, found) {
 }
 
 function watchBlock(film, d, loaded) {
-  const box = el('div', 'watch');
-  box.append(el('h4', 'watch-title', 'Où le voir'));
+  const box = el('section', 'watch');
+  const head = el('div', 'watch-head');
+  head.append(el('h4', 'watch-title', 'Où le voir'));
+  box.append(head);
 
   const w = d.watch;
-  if (loaded && !w && !d.archive) box.append(el('p', 'watch-none', 'Aucune offre en Belgique ni en France.'));
+  if (loaded && !w && !d.archive) head.append(el('p', 'watch-none', 'Aucune offre en Belgique ni en France.'));
 
   const list = el('ul', 'leaders');
   if (w && w.stream.length) list.append(leader(w.stream.join(', '), 'streaming, ' + w.country, w.link, true));
