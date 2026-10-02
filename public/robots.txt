@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://random-movie.pikilab.app/sitemap.xml
+Sitemap: https://seance404.pikilab.app/sitemap.xml

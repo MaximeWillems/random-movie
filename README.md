@@ -55,7 +55,7 @@ Le site est entièrement statique : il est publié tel quel depuis `public/` sur
 `main`.
 
 - Projet Pages relié au dépôt GitHub, sans commande de build, dossier de sortie `public`
-- Domaine personnalisé `random-movie.pikilab.app`, ajouté depuis le projet Pages
+- Domaine personnalisé `seance404.pikilab.app`, ajouté depuis le projet Pages
 - `public/_headers` : politique de sécurité (seules les polices Google, l'API et
   les images TMDB et la recherche Internet Archive sont permises) et cache
 - `public/404.html` : page des adresses inconnues
