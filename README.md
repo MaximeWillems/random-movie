@@ -11,6 +11,22 @@ Deux salles pour cinéphiles :
 Le site suit le thème clair ou sombre du système ; le lien en haut à droite
 force l'un ou l'autre (choix gardé dans le `localStorage`, clé `lb-theme`).
 
+## Langues
+
+Le site existe en français (`/`) et en anglais (`/en`). C'est la même page :
+`public/_redirects` sert `index.html` à `/en`, et `public/i18n.js` choisit la
+langue d'après l'adresse. Le HTML est écrit en français ; en anglais, les textes
+marqués `data-i18n` sont remplacés au chargement, et tous les textes créés par
+le script passent par `t()`. Le lien en haut de page passe d'une langue à
+l'autre en gardant la salle ouverte.
+
+- En anglais, TMDB donne résumés et genres en anglais, et « Where to watch »
+  cherche les offres aux États-Unis puis au Royaume-Uni (Belgique puis France
+  en français). Les noms des réalisateurs viennent toujours de la fiche anglaise
+- `public/_headers` donne à Google l'adresse canonique de chaque langue et les
+  versions alternatives (`hreflang`)
+- À propos : `/a-propos` et `/en/about` ; la page 404 est bilingue
+
 ## Sources des données
 
 Le site n'utilise **aucune donnée Letterboxd** : il renvoie seulement vers les

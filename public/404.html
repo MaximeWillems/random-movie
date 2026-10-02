@@ -23,8 +23,10 @@
   .main { padding: 22px 24px; }
   h1 { font: 900 38px/0.95 'Archivo'; font-stretch: 62%; text-transform: uppercase; }
   p { margin-top: 10px; font-size: 15px; }
-  a { display: inline-block; margin-top: 16px; padding: 9px 16px 8px; background: var(--cream); color: #1a1820; font: 800 14px 'Archivo'; font-stretch: 75%; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; }
-  a:hover { background: #1a1820; color: var(--cream); }
+  .main > a { display: inline-block; margin-top: 16px; padding: 9px 16px 8px; background: var(--cream); color: #1a1820; font: 800 14px 'Archivo'; font-stretch: 75%; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; }
+  .main > a:hover { background: #1a1820; color: var(--cream); }
+  .en { margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(246, 240, 228, 0.35); font-size: 13px; opacity: 0.85; }
+  .en a { color: inherit; }
 </style>
 </head>
 <body>
@@ -34,6 +36,7 @@
       <h1>Cette séance n'existe pas</h1>
       <p>La page demandée n'est pas à l'affiche.</p>
       <a href="/">Retour aux salles</a>
+      <p class="en" lang="en">This screening does not exist. <a href="/en">Back to the screens</a></p>
     </div>
   </div>
 </body>

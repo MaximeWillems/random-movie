@@ -1,0 +1,3 @@
+# Version anglaise : même page, servie à /en (i18n.js choisit la langue d'après l'adresse)
+/en/ /en 301
+/en / 200

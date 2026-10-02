@@ -8,6 +8,12 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
+# Même page en deux langues : adresse canonique et versions pour les moteurs de recherche
+/
+  Link: <https://seance404.pikilab.app/>; rel="canonical", <https://seance404.pikilab.app/>; rel="alternate"; hreflang="fr", <https://seance404.pikilab.app/en>; rel="alternate"; hreflang="en", <https://seance404.pikilab.app/>; rel="alternate"; hreflang="x-default"
+/en
+  Link: <https://seance404.pikilab.app/en>; rel="canonical", <https://seance404.pikilab.app/>; rel="alternate"; hreflang="fr", <https://seance404.pikilab.app/en>; rel="alternate"; hreflang="en", <https://seance404.pikilab.app/>; rel="alternate"; hreflang="x-default"
+
 # Données et images : gardées en cache, elles changent rarement
 /*.json
   Cache-Control: public, max-age=86400

@@ -10,6 +10,9 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Version anglaise : même page, servie à /en comme en ligne (public/_redirects)
+app.get(['/en', '/en/'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
 // Adresses sans .html, comme en ligne (/a-propos)
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 

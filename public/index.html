@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Séance 404 — films peu connus à découvrir et duel de popularité</title>
 <meta name="description" content="Tire au hasard un film peu connu mais très bien noté, ou un film de ta watchlist Letterboxd, avec son résumé et où le voir légalement. Et un duel : lequel de deux films est le plus populaire ?">
-<link rel="canonical" href="https://seance404.pikilab.app/">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#f3ede1">
 
 <!-- Aperçu quand le lien est partagé -->
@@ -132,7 +131,7 @@
   .narrow { font-stretch: 62%; font-weight: 900; text-transform: uppercase; }
 
   /* ---------- Bandeau ---------- */
-  .topbar { display: flex; justify-content: flex-end; padding-top: 14px; font-size: 13px; color: var(--ink-2); }
+  .topbar { display: flex; justify-content: flex-end; gap: 18px; padding-top: 14px; font-size: 13px; color: var(--ink-2); }
   .mast {
     display: flex;
     justify-content: space-between;
@@ -149,8 +148,8 @@
     max-width: 100%;
     aspect-ratio: 1693 / 247;
     background: var(--ink);
-    -webkit-mask: url(logo.svg) center / contain no-repeat;
-    mask: url(logo.svg) center / contain no-repeat;
+    -webkit-mask: url(/logo.svg) center / contain no-repeat;
+    mask: url(/logo.svg) center / contain no-repeat;
   }
   .visually-hidden {
     position: absolute;
@@ -619,6 +618,7 @@
 <div class="app">
 
   <div class="topbar">
+    <a class="link" id="langToggle" href="/en" hreflang="en" lang="en">English</a>
     <button class="link" id="themeToggle" type="button"></button>
   </div>
 
@@ -627,31 +627,31 @@
     <header class="mast">
       <h1 class="logo"><span class="visually-hidden">Séance 404</span></h1>
     </header>
-    <p class="home-intro">La séance va bientôt commencer : prends ton ticket et choisis ta salle.</p>
+    <p class="home-intro" data-i18n="homeIntro">La séance va bientôt commencer : prends ton ticket et choisis ta salle.</p>
 
     <div class="rooms">
       <div class="ticket" style="--c: var(--t-bleu)">
         <dl class="stub">
-          <div class="field big"><dt>Salle</dt><dd>01</dd></div>
+          <div class="field big"><dt data-i18n="screen">Salle</dt><dd>01</dd></div>
         </dl>
         <div class="ticket-main no-poster">
           <div class="room">
-            <h2 class="film-title narrow">Trouver un film</h2>
-            <p class="synopsis">Un film tiré au hasard parmi des films peu connus mais bien notés, ou dans ta watchlist. Avec sa note, son résumé et où le voir.</p>
-            <a class="btn" id="homeDraw" href="#decouvrir">Tirer un film</a>
+            <h2 class="film-title narrow" data-i18n="room1Title">Trouver un film</h2>
+            <p class="synopsis" data-i18n="room1Text">Un film tiré au hasard parmi des films peu connus mais bien notés, ou dans ta watchlist. Avec sa note, son résumé et où le voir.</p>
+            <a class="btn" id="homeDraw" href="#decouvrir" data-i18n="drawBtn">Tirer un film</a>
           </div>
         </div>
       </div>
 
       <div class="ticket" style="--c: var(--t-framboise)">
         <dl class="stub">
-          <div class="field big"><dt>Salle</dt><dd>02</dd></div>
+          <div class="field big"><dt data-i18n="screen">Salle</dt><dd>02</dd></div>
         </dl>
         <div class="ticket-main no-poster">
           <div class="room">
-            <h2 class="film-title narrow">Duel</h2>
-            <p class="synopsis">Devine quel film est le plus populaire.</p>
-            <a class="btn" href="#duel">Jouer</a>
+            <h2 class="film-title narrow" data-i18n="room2Title">Duel</h2>
+            <p class="synopsis" data-i18n="room2Text">Devine quel film est le plus populaire.</p>
+            <a class="btn" href="#duel" data-i18n="play">Jouer</a>
           </div>
         </div>
       </div>
@@ -661,64 +661,64 @@
   <div id="site" hidden>
   <header class="mast">
     <div>
-      <h1><a class="logo" href="#"><span class="visually-hidden">Séance 404, accueil</span></a></h1>
+      <h1><a class="logo" href="#"><span class="visually-hidden" data-i18n="logoHome">Séance 404, accueil</span></a></h1>
     </div>
     <div>
       <!-- Profil Letterboxd : l'export du membre, lu dans le navigateur -->
       <div class="import" id="importBox">
-        <p class="import-label">Profil Letterboxd</p>
-        <button class="btn btn-sm" id="importBtn" type="button">Importer mon export</button>
+        <p class="import-label" data-i18n="importLabel">Profil Letterboxd</p>
+        <button class="btn btn-sm" id="importBtn" type="button" data-i18n="importBtn">Importer mon export</button>
         <input id="importFile" type="file" accept=".zip,.csv" multiple hidden>
-        <p class="import-help"><a href="https://letterboxd.com/settings/data/" target="_blank" rel="noopener">Exporter mes données</a> sur Letterboxd, puis importer le ZIP. Il reste dans ton navigateur.</p>
+        <p class="import-help" data-i18n-html="importHelp"><a href="https://letterboxd.com/settings/data/" target="_blank" rel="noopener">Exporter mes données</a> sur Letterboxd, puis importer le ZIP. Il reste dans ton navigateur.</p>
         <p class="pseudo-error" id="importError" hidden></p>
       </div>
       <div class="member" id="who" hidden>
         <div class="member-card">
-          <span class="member-label">Carte de membre</span>
+          <span class="member-label" data-i18n="memberCard">Carte de membre</span>
           <strong class="member-name" id="whoName"></strong>
           <span class="member-num" id="whoNum"></span>
         </div>
-        <p class="member-stats"><span id="whoStats"></span> — <button class="link" id="reimport" type="button">mettre à jour</button> · <button class="link" id="forget" type="button">retirer</button></p>
+        <p class="member-stats"><span id="whoStats"></span> — <button class="link" id="reimport" type="button" data-i18n="reimport">mettre à jour</button> · <button class="link" id="forget" type="button" data-i18n="forget">retirer</button></p>
       </div>
     </div>
   </header>
 
   <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="find" aria-selected="true" style="--c: var(--vermillon)">Trouver un film</button>
-    <button class="tab" role="tab" data-tab="duel" aria-selected="false" style="--c: var(--bleu)">Duel<span class="tab-n" id="nDuel"></span></button>
+    <button class="tab" role="tab" data-tab="find" aria-selected="true" style="--c: var(--vermillon)" data-i18n="tabFind">Trouver un film</button>
+    <button class="tab" role="tab" data-tab="duel" aria-selected="false" style="--c: var(--bleu)"><span data-i18n="tabDuel">Duel</span><span class="tab-n" id="nDuel"></span></button>
   </nav>
 
   <main>
     <section id="view-find">
       <div class="opts">
         <div class="opts-group" id="optFind">
-          <span class="opts-label">Dans</span>
-          <button class="opt" data-v="watchlist" aria-pressed="false">ma watchlist</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="gems" aria-pressed="true">les films peu connus</button>
+          <span class="opts-label" data-i18n="optIn">Dans</span>
+          <button class="opt" data-v="watchlist" aria-pressed="false" data-i18n="optWatchlist">ma watchlist</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="gems" aria-pressed="true" data-i18n="optGems">les films peu connus</button>
         </div>
         <div class="opts-group" id="optRating">
-          <span class="opts-label">Note</span>
-          <button class="opt" data-v="all" aria-pressed="true">toutes</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="7" aria-pressed="false">7/10 et plus</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="7.5" aria-pressed="false">7,5/10 et plus</button>
+          <span class="opts-label" data-i18n="optRating">Note</span>
+          <button class="opt" data-v="all" aria-pressed="true" data-i18n="optAllRatings">toutes</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="7" aria-pressed="false" data-i18n="opt7">7/10 et plus</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="7.5" aria-pressed="false" data-i18n="opt75">7,5/10 et plus</button>
         </div>
         <div class="opts-group" id="optLength">
-          <span class="opts-label">Durée</span>
-          <button class="opt" data-v="all" aria-pressed="true">tout</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="short" aria-pressed="false">courts</button><span class="opts-sep">/</span>
-          <button class="opt" data-v="long" aria-pressed="false">longs</button>
+          <span class="opts-label" data-i18n="optLength">Durée</span>
+          <button class="opt" data-v="all" aria-pressed="true" data-i18n="optAnyLength">tout</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="short" aria-pressed="false" data-i18n="optShort">courts</button><span class="opts-sep">/</span>
+          <button class="opt" data-v="long" aria-pressed="false" data-i18n="optLong">longs</button>
         </div>
         <p class="opts-note" id="seenNote" hidden></p>
       </div>
       <div class="intro">
         <p id="findText"></p>
-        <button class="btn" id="drawBtn" type="button">Tirer un film</button>
+        <button class="btn" id="drawBtn" type="button" data-i18n="drawBtn">Tirer un film</button>
       </div>
       <div class="history empty" id="history">
-        <span>Déjà tirés</span>
+        <span data-i18n="histLabel">Déjà tirés</span>
         <div class="history-last" id="historyLast"></div>
         <button class="link history-all" id="historyAll" type="button" aria-expanded="false" hidden></button>
-        <button class="link history-clear" id="historyClear" type="button">effacer</button>
+        <button class="link history-clear" id="historyClear" type="button" data-i18n="histClear">effacer</button>
         <div class="history-panel" id="historyPanel" hidden></div>
       </div>
       <div id="stage"></div>
@@ -728,22 +728,22 @@
       <div class="duel-top">
         <div class="opts">
           <div class="opts-group" id="optSource">
-            <span class="opts-label">Films</span>
-            <button class="opt" data-v="popular" aria-pressed="true">populaires</button><span class="opts-sep">/</span>
-            <button class="opt" data-v="seen" aria-pressed="false">que j'ai vus</button><span class="opts-sep">/</span>
-            <button class="opt" data-v="watchlist" aria-pressed="false">de ma watchlist</button>
+            <span class="opts-label" data-i18n="duelFilms">Films</span>
+            <button class="opt" data-v="popular" aria-pressed="true" data-i18n="duelPopular">populaires</button><span class="opts-sep">/</span>
+            <button class="opt" data-v="seen" aria-pressed="false" data-i18n="duelSeen">que j'ai vus</button><span class="opts-sep">/</span>
+            <button class="opt" data-v="watchlist" aria-pressed="false" data-i18n="duelWatchlist">de ma watchlist</button>
           </div>
         </div>
         <dl class="score">
-          <div><dt>Série</dt><dd id="streak">0</dd></div>
-          <div><dt>Record</dt><dd id="best">0</dd></div>
+          <div><dt data-i18n="streak">Série</dt><dd id="streak">0</dd></div>
+          <div><dt data-i18n="best">Record</dt><dd id="best">0</dd></div>
         </dl>
       </div>
 
       <p class="blank" id="duelStatus" hidden></p>
       <div id="duelGame" hidden>
         <div class="duel-q">
-          <h2>Lequel est le plus populaire ?</h2>
+          <h2 data-i18n="duelQuestion">Lequel est le plus populaire ?</h2>
           <!-- Palier de difficulté calculé mais pas montré au joueur -->
           <p id="tier" hidden></p>
         </div>
@@ -752,7 +752,7 @@
           <p class="verdict" id="verdict" aria-live="polite"></p>
           <button class="btn btn-next" id="nextDuel" type="button" hidden>
             <span class="leader" id="leader" aria-hidden="true"><span id="leaderN"></span></span>
-            Duel suivant
+            <span data-i18n="nextDuel">Duel suivant</span>
           </button>
         </div>
         <!-- Niveau calculé mais pas montré au joueur -->
@@ -764,13 +764,14 @@
 
   <!-- Sources citées comme le demandent TMDB et JustWatch ; aucun lien avec Letterboxd -->
   <footer class="foot">
-    <a class="foot-tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener"><img src="tmdb.svg" alt="TMDB" width="110" height="14"></a>
-    <p>Ce site utilise l'API TMDB mais n'est ni approuvé ni certifié par TMDB. Offres de visionnage : <a href="https://www.justwatch.com/" target="_blank" rel="noopener">JustWatch</a>.</p>
-    <p>Séance 404 n'est pas affilié à Letterboxd.</p>
-    <p><a href="/a-propos">À propos</a></p>
+    <a class="foot-tmdb" href="https://www.themoviedb.org/" target="_blank" rel="noopener"><img src="/tmdb.svg" alt="TMDB" width="110" height="14"></a>
+    <p data-i18n-html="footTmdb">Ce site utilise l'API TMDB mais n'est ni approuvé ni certifié par TMDB. Offres de visionnage : <a href="https://www.justwatch.com/" target="_blank" rel="noopener">JustWatch</a>.</p>
+    <p data-i18n="footLetterboxd">Séance 404 n'est pas affilié à Letterboxd.</p>
+    <p><a id="aboutLink" href="/a-propos" data-i18n="about">À propos</a></p>
   </footer>
 </div>
 
+<script src="/i18n.js"></script>
 <script>
 // Aucune donnée Letterboxd : films, notes, popularité, résumés, affiches et
 // offres viennent de l'API TMDB ; le profil, de l'export que le membre importe.
@@ -781,9 +782,6 @@ const TMDB_IMG = 'https://image.tmdb.org/t/p/';
 
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const nf = new Intl.NumberFormat('fr-FR');
-// Archivo n'a pas l'espace fine du format français : espace insécable classique à la place.
-const num = n => nf.format(n).replace(/ /g, ' ');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const $ = id => document.getElementById(id);
 
@@ -826,12 +824,12 @@ function paint(node, ink) {
 }
 
 // Moyenne TMDB, sur 10
-const fmtVote = v => v.toFixed(1).replace('.', ',');
+const fmtVote = v => fmtDec(v, 1);
 const pad = n => String(n).padStart(2, '0');
 const isShort = f => f.runtime && f.runtime <= 40;
 function fmtRuntime(m) {
   if (!m) return '';
-  return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + pad(m % 60);
+  return m < 60 ? m + ' min' : t('runtime', Math.floor(m / 60), pad(m % 60));
 }
 
 // Affiches servies par TMDB, à la largeur demandée (w342, w500…)
@@ -842,7 +840,7 @@ function posterUrl(path, size) {
 function posterImg(url, cls, name) {
   const img = el('img', cls);
   img.src = url;
-  img.alt = 'Affiche de ' + name;
+  img.alt = t('posterAlt', name);
   img.decoding = 'async';
   img.addEventListener('error', () => img.remove());
   return img;
@@ -855,7 +853,7 @@ const isDark = () => document.documentElement.dataset.theme
   : darkQuery.matches;
 
 function renderThemeToggle() {
-  $('themeToggle').textContent = isDark() ? 'Mode clair' : 'Mode sombre';
+  $('themeToggle').textContent = isDark() ? t('themeLight') : t('themeDark');
 }
 
 $('themeToggle').addEventListener('click', () => {
@@ -977,7 +975,7 @@ $('importFile').addEventListener('change', async e => {
   try {
     applyExport(await readExport(files));
   } catch (err) {
-    $('importError').textContent = err.message || 'Fichier illisible.';
+    $('importError').textContent = err.message || t('fileUnreadable');
     $('importError').hidden = false;
   }
 });
@@ -1000,7 +998,7 @@ async function unzipCsv(file) {
 
   let end = buf.length - 22;
   while (end >= 0 && view.getUint32(end, true) !== 0x06054b50) end--;
-  if (end < 0) throw new Error('Ce ZIP est illisible.');
+  if (end < 0) throw new Error(t('zipUnreadable'));
 
   const csv = {};
   let p = view.getUint32(end + 16, true);
@@ -1062,7 +1060,7 @@ function applyExport(csv) {
   const rows = name => (csv[name] ? parseCsv(csv[name]) : null);
   const watched = rows('watched.csv');
   const watchlist = rows('watchlist.csv');
-  if (!watched && !watchlist) throw new Error('Ni watched.csv ni watchlist.csv : est-ce bien l’export Letterboxd ?');
+  if (!watched && !watchlist) throw new Error(t('notExport'));
 
   // Titre, année et lien Letterboxd de chaque film ; dans la watchlist, le lien sert d'identifiant
   const film = r => ({ name: r.Name, year: r.Year ? Number(r.Year) : null, uri: r['Letterboxd URI'] });
@@ -1093,8 +1091,8 @@ function renderProfile() {
   const seen = state.watched.length;
   const wl = state.watchlist.length;
   $('whoName').textContent = '@' + state.user;
-  $('whoNum').textContent = 'N° ' + (1000 + (hash(state.user.toLowerCase()) % 9000));
-  $('whoStats').textContent = `${num(seen)} film${seen > 1 ? 's' : ''} vu${seen > 1 ? 's' : ''} · ${num(wl)} en watchlist`;
+  $('whoNum').textContent = t('memberNum') + (1000 + (hash(state.user.toLowerCase()) % 9000));
+  $('whoStats').textContent = t('memberStats', seen, wl);
 }
 
 $('forget').addEventListener('click', () => {
@@ -1157,15 +1155,15 @@ function refresh() {
 
   // Texte d'en-tête et état vide de la source affichée
   if (gemsOn) {
-    $('findText').replaceChildren(gems ? el('strong', null, `${num(gems.length)} films peu connus`) : '');
+    $('findText').replaceChildren(gems ? el('strong', null, t('gemsCount', gems.length)) : '');
   } else {
     const n = state.watchlist.length;
     $('findText').replaceChildren(
-      document.createTextNode('Watchlist de '),
+      document.createTextNode(t('watchlistOf')),
       el('strong', null, '@' + state.user),
-      document.createTextNode(` · ${n} film${n > 1 ? 's' : ''}`),
+      document.createTextNode(t('filmsCount', n)),
     );
-    if (!n) $('stage').replaceChildren(el('p', 'blank', 'Watchlist vide dans cet export.'));
+    if (!n) $('stage').replaceChildren(el('p', 'blank', t('watchlistEmpty')));
   }
   if (!state.current[src] && (gemsOn || state.watchlist.length)) $('stage').replaceChildren();
   renderHistory(src);
@@ -1173,17 +1171,17 @@ function refresh() {
   // Films peu connus déjà vus d'après l'export, écartés du tirage
   const s = gems && state.user ? gemPool(gems).filter(isSeen).length : 0;
   $('seenNote').hidden = !(gemsOn && s);
-  $('seenNote').textContent = `${s} déjà vu${s > 1 ? 's' : ''} écarté${s > 1 ? 's' : ''}`;
+  $('seenNote').textContent = t('seenSkipped', s);
 
   // Les sources liées au profil demandent l'export Letterboxd
   $('optFind').querySelector('[data-v="watchlist"]').setAttribute('aria-disabled', !state.user);
   for (const b of $('optSource').querySelectorAll('.opt')) {
     const locked = b.dataset.v !== 'popular' && !state.user;
     b.setAttribute('aria-disabled', locked);
-    b.title = locked ? 'Export Letterboxd requis' : '';
+    b.title = locked ? t('exportRequired') : '';
   }
 
-  $('nDuel').textContent = duel.best ? 'record ' + duel.best : '';
+  $('nDuel').textContent = duel.best ? t('bestTab', duel.best) : '';
 
   // Le nombre de films peu connus s'affiche même sans tirage, après un rechargement
   if (gemsOn && !gems) loadGems().catch(() => {});
@@ -1198,7 +1196,7 @@ $('homeDraw').addEventListener('click', () => draw(state.source));
 
 async function loadGems() {
   if (!gems) {
-    const resp = await fetch('gems.json');
+    const resp = await fetch('/gems.json');
     if (!resp.ok) throw new Error('gems.json introuvable');
     gems = await resp.json();
     refresh();
@@ -1241,7 +1239,7 @@ function pickFrom(pool, hist, weight) {
 function pickGem(pool) {
   const cands = pool.filter(g => !isSeen(g));
   if (!cands.length) {
-    $('stage').replaceChildren(el('p', 'blank', 'Tu as déjà vu tous les films de cette sélection.'));
+    $('stage').replaceChildren(el('p', 'blank', t('allSeen')));
     return null;
   }
 
@@ -1270,7 +1268,7 @@ async function pickReleased(pool) {
 
     unreleased.add(film.slug);
   }
-  $('stage').replaceChildren(el('p', 'blank', 'Les derniers films tirés ne sont pas encore sortis.'));
+  $('stage').replaceChildren(el('p', 'blank', t('notReleased')));
   return null;
 }
 
@@ -1309,7 +1307,7 @@ async function draw(kind) {
   try {
     const pool = kind === 'gems' ? gemPool(await loadGems()) : watchPool();
     if (!pool.length) {
-      stage.replaceChildren(el('p', 'blank', 'Aucun film avec ces filtres.'));
+      stage.replaceChildren(el('p', 'blank', t('noFilm')));
       return;
     }
 
@@ -1328,7 +1326,7 @@ async function draw(kind) {
     if (state.hist[kind].length > HIST_MAX) state.hist[kind].shift();
     show(kind, entry);
   } catch (e) {
-    stage.replaceChildren(el('p', 'blank error', kind === 'gems' ? 'Sélection indisponible.' : 'Tirage impossible.'));
+    stage.replaceChildren(el('p', 'blank error', kind === 'gems' ? t('gemsUnavailable') : t('drawFailed')));
   } finally {
     if (stop) await stop();
     state.drawing = false;
@@ -1430,14 +1428,18 @@ async function searchTmdb(film) {
 async function tmdbMovie(id) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const resp = await fetch(`${TMDB}/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,watch/providers`);
+      const resp = await fetch(`${TMDB}/movie/${id}?api_key=${TMDB_KEY}&language=${LANG === 'en' ? 'en-US' : 'fr-FR'}&append_to_response=credits,watch/providers`);
       if (!resp.ok) return null;
       const t = await resp.json();
+      if (LANG === 'en') return t;
 
-      // Pas de synopsis en français : on prend l'anglais
-      if (!t.overview) {
-        const en = await fetch(`${TMDB}/movie/${id}?api_key=${TMDB_KEY}&language=en-US`);
-        if (en.ok) t.overview = (await en.json()).overview || '';
+      // En français, TMDB donne parfois les noms dans leur écriture d'origine
+      // (今石洋之) : réalisation et synopsis manquant repris de la fiche anglaise
+      const en = await fetch(`${TMDB}/movie/${id}?api_key=${TMDB_KEY}&language=en-US&append_to_response=credits`);
+      if (en.ok) {
+        const e = await en.json();
+        t.credits = e.credits || t.credits;
+        if (!t.overview) t.overview = e.overview || '';
       }
       return t;
     } catch (e) {
@@ -1450,7 +1452,7 @@ async function tmdbMovie(id) {
 // Offres légales connues de TMDB (données JustWatch), Belgique puis France.
 function watchOf(t) {
   const results = (t['watch/providers'] && t['watch/providers'].results) || {};
-  for (const country of ['BE', 'FR']) {
+  for (const country of LANG === 'en' ? ['US', 'GB'] : ['BE', 'FR']) {
     const r = results[country];
     if (!r) continue;
     const names = list => [...new Set(list.map(p => p.provider_name))].slice(0, 3);
@@ -1503,18 +1505,18 @@ function filmBlock(entry) {
     stub.append(div);
     return div;
   };
-  field('Tirage', pad(entry.n), 'big');
-  field('Moyenne', rating != null ? fmtVote(rating) : waiting, null, rating != null ? '/10' : null);
-  const notes = field('Votes', count != null ? num(count) : waiting);
+  field(t('stubDraw'), pad(entry.n), 'big');
+  field(t('stubRating'), rating != null ? fmtVote(rating) : waiting, null, rating != null ? '/10' : null);
+  const notes = field(t('stubVotes'), count != null ? num(count) : waiting);
 
   // Source des chiffres, en petit
   if (count != null) notes.append(el('p', 'stats-from', 'TMDB'));
-  field('Genres', d.genres && d.genres.length ? d.genres.join(', ') : waiting, 'text');
+  field(t('stubGenres'), d.genres && d.genres.length ? d.genres.join(', ') : waiting, 'text');
 
   // Partie principale : titre, année, durée, réalisation et description, l'affiche à droite
   const runtime = d.runtime || f.runtime;
   const directors = (d.directors && d.directors.length ? d.directors : f.directors) || [];
-  const length = runtime ? fmtRuntime(runtime) + (runtime <= 40 ? ', court métrage' : '') : '';
+  const length = runtime ? fmtRuntime(runtime) + (runtime <= 40 ? t('shortFilm') : '') : '';
   const meta = [d.year || f.year, length, directors.slice(0, 2).join(', ')].filter(Boolean).join(' — ');
 
   const main = el('div', 'ticket-main');
@@ -1564,15 +1566,15 @@ function leader(name, what, href, found) {
 function watchBlock(film, d, loaded) {
   const box = el('section', 'watch');
   const head = el('div', 'watch-head');
-  head.append(el('h4', 'watch-title', 'Où le voir'));
+  head.append(el('h4', 'watch-title', t('whereToWatch')));
   box.append(head);
 
   const w = d.watch;
-  if (loaded && !w && !d.archive) head.append(el('p', 'watch-none', 'Aucune offre en Belgique ni en France.'));
+  if (loaded && !w && !d.archive) head.append(el('p', 'watch-none', t('noOffer')));
 
   // Les offres viennent de JustWatch, par TMDB : la source doit être citée
   if (w) {
-    const src = el('p', 'watch-src', 'Offres : ');
+    const src = el('p', 'watch-src', t('offersBy'));
     const a = el('a', null, 'JustWatch');
     a.href = 'https://www.justwatch.com/';
     a.target = '_blank';
@@ -1582,18 +1584,18 @@ function watchBlock(film, d, loaded) {
   }
 
   const list = el('ul', 'leaders');
-  if (w && w.stream.length) list.append(leader(w.stream.join(', '), 'streaming, ' + w.country, w.link, true));
-  if (w && w.rent.length) list.append(leader(w.rent.join(', '), 'location, ' + w.country, w.link, !w.stream.length));
-  if (d.archive) list.append(leader('Internet Archive', 'libre de droits', d.archive, true));
+  if (w && w.stream.length) list.append(leader(w.stream.join(', '), t('streaming', w.country), w.link, true));
+  if (w && w.rent.length) list.append(leader(w.rent.join(', '), t('rent', w.country), w.link, !w.stream.length));
+  if (d.archive) list.append(leader('Internet Archive', t('freeCopy'), d.archive, true));
 
   const name = d.name || film.name;
   const q = encodeURIComponent(name + ' ' + (d.year || film.year || ''));
   list.append(
-    leader('YouTube', 'chercher', 'https://www.youtube.com/results?search_query=' + q),
-    leader('Vimeo', 'chercher', 'https://vimeo.com/search?q=' + q),
-    leader('Letterboxd', 'fiche', film.uri || `https://letterboxd.com/film/${film.slug}/`),
+    leader('YouTube', t('search'), 'https://www.youtube.com/results?search_query=' + q),
+    leader('Vimeo', t('search'), 'https://vimeo.com/search?q=' + q),
+    leader('Letterboxd', t('page'), film.uri || `https://letterboxd.com/film/${film.slug}/`),
   );
-  if (d.tmdbId) list.append(leader('TMDB', 'fiche', `https://www.themoviedb.org/movie/${d.tmdbId}`));
+  if (d.tmdbId) list.append(leader('TMDB', t('page'), `https://www.themoviedb.org/movie/${d.tmdbId}`));
   box.append(list);
   return box;
 }
@@ -1625,7 +1627,7 @@ function renderHistory(kind) {
   $('historyLast').replaceChildren(...recent.slice(0, HIST_SHOWN).map(item));
   $('historyPanel').replaceChildren(...recent.map(item));
   $('historyAll').hidden = hist.length <= HIST_SHOWN;
-  $('historyAll').textContent = `Tout voir (${hist.length})`;
+  $('historyAll').textContent = t('seeAll', hist.length);
   if (hist.length <= HIST_SHOWN) closeHistory();
 }
 
@@ -1758,8 +1760,8 @@ const sortPool = list => list.sort((a, b) => b.votes - a.votes);
 
 async function loadPopular() {
   if (!duel.popular) {
-    const resp = await fetch('films.json');
-    if (!resp.ok) throw new Error('Films populaires indisponibles.');
+    const resp = await fetch('/films.json');
+    if (!resp.ok) throw new Error(t('popularUnavailable'));
     const films = (await resp.json()).filter(f => f.name && f.votes >= MIN_VOTES);
     duel.popular = sortPool(films);
   }
@@ -1783,7 +1785,7 @@ async function setSource(src) {
   duel.recent = [];
   duel.loading = true;
   for (const b of $('optSource').querySelectorAll('.opt')) b.setAttribute('aria-pressed', b.dataset.v === src);
-  duelStatus('Chargement…');
+  duelStatus(t('loading'));
 
   try {
     const popular = await loadPopular();
@@ -1798,8 +1800,7 @@ async function setSource(src) {
     }
 
     if (duel.pool.length < MIN_POOL) {
-      const what = src === 'seen' ? 'films vus' : 'films de ta watchlist';
-      duelStatus(`Pas assez de ${what} parmi les ${num(popular.length)} films du duel.`, true);
+      duelStatus(t('notEnoughMine', src === 'seen', popular.length), true);
       return;
     }
     duelStatus('');
@@ -1807,7 +1808,7 @@ async function setSource(src) {
   } catch (e) {
     if (token !== duel.token) return;
     duel.loading = false;
-    duelStatus(e.message || 'Films indisponibles.', true);
+    duelStatus(e.message || t('filmsUnavailable'), true);
   }
 }
 
@@ -1894,7 +1895,7 @@ function newDuel() {
   const [pair, tier] = duel.pending ? [duel.pending.pair, duel.pending.tier] : pickPair(nextTier());
   duel.pending = null;
   if (!pair) {
-    duelStatus('Pas assez de films pour un duel.', true);
+    duelStatus(t('notEnoughDuel'), true);
     return;
   }
 
@@ -1959,8 +1960,8 @@ function side(film, i, ink) {
     el('span', 'side-title narrow', film.name),
     el('span', 'side-year', film.year || ''),
     result,
-    el('span', 'stamp stamp-pick', 'Ton choix'),
-    el('span', 'stamp stamp-win', 'Le plus populaire'),
+    el('span', 'stamp stamp-pick', t('yourPick')),
+    el('span', 'stamp stamp-win', t('mostPopular')),
   );
 
   const photo = el('span', 'side-photo');
@@ -2003,16 +2004,16 @@ function vote(choice) {
   saveDuel();
   renderScore(record);
 
-  const times = ratio(a, b).toFixed(1).replace('.', ',');
+  const times = fmtDec(ratio(a, b), 1);
   const v = $('verdict');
   v.className = 'verdict ' + (ok ? 'ok' : 'ko');
   v.replaceChildren(
-    el('strong', null, record ? 'Record.' : ok ? 'Bien vu.' : 'Raté.'),
-    document.createTextNode(`${duel.pair[win].name} est ${times} fois plus populaire que ${duel.pair[1 - win].name}.`),
+    el('strong', null, record ? t('verdictRecord') : ok ? t('verdictOk') : t('verdictKo')),
+    document.createTextNode(t('verdict', duel.pair[win].name, times, duel.pair[1 - win].name)),
   );
 
   // Les deux fiches Letterboxd, pour aller plus loin
-  const links = el('span', 'verdict-links', 'Sur Letterboxd : ');
+  const links = el('span', 'verdict-links', t('onLetterboxd'));
   duel.pair.forEach((f, k) => {
     if (k) links.append(document.createTextNode(' · '));
     const a = el('a', null, f.name);
@@ -2097,6 +2098,7 @@ function route() {
 window.addEventListener('hashchange', route);
 
 // ---------- Démarrage ----------
+translatePage();
 loadFind();
 renderThemeToggle();
 renderProfile();
