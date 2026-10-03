@@ -131,7 +131,10 @@
   .narrow { font-stretch: 62%; font-weight: 900; text-transform: uppercase; }
 
   /* ---------- Bandeau ---------- */
-  .topbar { display: flex; justify-content: flex-end; gap: 18px; padding-top: 14px; font-size: 13px; color: var(--ink-2); }
+  .topbar { display: flex; justify-content: flex-end; gap: 8px; padding-top: 14px; font-size: 12px; color: var(--ink-3); }
+  .topbar .link { text-decoration: none; }
+  .topbar .link:hover { color: var(--ink); text-decoration: underline; }
+  .topbar .link + .link::before { content: '·'; margin-right: 8px; color: var(--ink-3); }
   .mast {
     display: flex;
     justify-content: space-between;
@@ -161,10 +164,25 @@
   }
 
   /* Import de l'export Letterboxd */
-  .import { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 300px; text-align: right; }
+  .import { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .import-row { display: flex; align-items: center; gap: 10px; }
   .import-label { font-size: 13px; color: var(--ink-2); }
-  .import-help { font-size: 12px; line-height: 1.4; color: var(--ink-2); }
-  .import-help a { color: inherit; }
+  .import .import-how { font-size: 12px; color: var(--ink-3); }
+  .import-help {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 6;
+    width: 290px;
+    margin-top: 6px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+  }
+  .import-help a { color: inherit; font-weight: 700; }
   .import.flash .btn { animation: flash 0.7s; }
   @keyframes flash { 0%, 60% { background: var(--ink); color: var(--paper); } }
   .pseudo-error { margin-top: 2px; max-width: 280px; font-size: 13px; color: var(--red); }
@@ -599,7 +617,8 @@
     .app { padding: 0 18px 32px; }
     .logo { width: 300px; }
     .mast > div:last-child { width: 100%; }
-    .import { align-items: flex-start; text-align: left; }
+    .import { align-items: flex-start; }
+    .import-help { right: auto; left: 0; }
     .tab { padding: 10px 11px 9px; font-size: 14px; }
     .intro .btn { width: 100%; }
     .rooms { grid-template-columns: 1fr; }
@@ -675,10 +694,13 @@
     <div>
       <!-- Profil Letterboxd : l'export du membre, lu dans le navigateur -->
       <div class="import" id="importBox">
-        <p class="import-label" data-i18n="importLabel">Profil Letterboxd</p>
-        <button class="btn btn-sm" id="importBtn" type="button" data-i18n="importBtn">Importer mon export</button>
+        <div class="import-row">
+          <p class="import-label" data-i18n="importLabel">Profil Letterboxd</p>
+          <button class="btn btn-sm" id="importBtn" type="button" data-i18n="importBtn">Importer mon export</button>
+        </div>
+        <button class="link import-how" id="importHow" type="button" aria-expanded="false" aria-controls="importHelp" data-i18n="importHow">Comment l'obtenir ?</button>
+        <p class="import-help" id="importHelp" hidden data-i18n-html="importHelp">Sur Letterboxd : <a href="https://letterboxd.com/settings/data/" target="_blank" rel="noopener">Settings → Import &amp; Export → Export your data</a>. Importe ensuite le ZIP ici : il reste dans ton navigateur.</p>
         <input id="importFile" type="file" accept=".zip,.csv" multiple hidden>
-        <p class="import-help" data-i18n-html="importHelp"><a href="https://letterboxd.com/settings/data/" target="_blank" rel="noopener">Exporter mes données</a> sur Letterboxd, puis importer le ZIP. Il reste dans ton navigateur.</p>
         <p class="pseudo-error" id="importError" hidden></p>
       </div>
       <div class="member" id="who" hidden>
@@ -973,6 +995,16 @@ function indexSeen() {
 // Export) : un ZIP de fichiers CSV. Il est lu ici, dans le navigateur, et
 // n'est envoyé nulle part.
 $('importBtn').addEventListener('click', () => $('importFile').click());
+
+// « Comment l'obtenir ? » ouvre l'aide par-dessus la page ; un clic ailleurs la referme
+function showImportHelp(open) {
+  $('importHelp').hidden = !open;
+  $('importHow').setAttribute('aria-expanded', String(open));
+}
+$('importHow').addEventListener('click', () => showImportHelp($('importHelp').hidden));
+document.addEventListener('click', e => {
+  if (!e.target.closest('#importBox')) showImportHelp(false);
+});
 $('reimport').addEventListener('click', () => $('importFile').click());
 
 $('importFile').addEventListener('change', async e => {
