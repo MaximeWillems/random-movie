@@ -188,8 +188,9 @@
   .member-stats { font-size: 13px; color: var(--ink-2); }
 
   /* ---------- Onglets ---------- */
-  /* Onglets posés comme des boutons, détachés du trait du logo et sans trait dessous */
-  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  /* Onglets posés comme des boutons, détachés du trait du logo ; trait fin
+     dessous, séparé d'eux par un espace */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
   .tab {
     --s: 2px;
     padding: 11px 16px 10px;
