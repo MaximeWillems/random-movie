@@ -1162,7 +1162,7 @@ function refresh() {
 
   // Texte d'en-tête et état vide de la source affichée
   if (gemsOn) {
-    $('findText').replaceChildren(gems ? el('strong', null, t('gemsCount', gems.length)) : '');
+    $('findText').replaceChildren();
   } else {
     const n = state.watchlist.length;
     $('findText').replaceChildren(
@@ -1190,7 +1190,7 @@ function refresh() {
 
   $('nDuel').textContent = duel.best ? t('bestTab', duel.best) : '';
 
-  // Le nombre de films peu connus s'affiche même sans tirage, après un rechargement
+  // Liste chargée d'avance : les films déjà vus écartés se comptent sans attendre un tirage
   if (gemsOn && !gems) loadGems().catch(() => {});
   saveFind();
 }
